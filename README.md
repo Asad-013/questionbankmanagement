@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ILET - University Exam Question Repository
+
+ILET is a fast, scalable, and clean university-focused web platform where students can upload and search exam questions.
+
+## Tech Stack
+
+- **Frontend**: Next.js 15+ (App Router), TypeScript, TailwindCSS 4.x
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **UI**: shadcn/ui components, Lucide icons
+- **State**: React Server Components + URL state
 
 ## Getting Started
 
-First, run the development server:
+1.  **Clone the repository** (if not already done).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2.  **Environment Setup**:
+    Copy `.env.example` to `.env.local` and fill in your Supabase credentials.
+    ```bash
+    cp .env.example .env.local
+    ```
+    Required variables:
+    - `NEXT_PUBLIC_SUPABASE_URL`
+    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3.  **Install Dependencies**:
+    ```bash
+    npm install
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4.  **Run Development Server**:
+    ```bash
+    npm run dev
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+- `src/app`: Next.js App Router pages and layouts.
+- `src/components`: UI components organized by scope (ui, features, layout).
+- `src/lib`: Utilities, Supabase clients, and logic.
+- `src/styles`: Global styles and Tailwind configuration.
+- `src/types`: TypeScript definitions (Database, etc).
 
-To learn more about Next.js, take a look at the following resources:
+## Database
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The project uses Supabase. Refer to `database_schema` in the documentation for the schema definition.
+Local development types are in `src/types/database.ts`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Contributing
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Follow the clean code principles.
+- Use `npm run lint` before committing.
+- Ensure all new components are responsive and accessible.
