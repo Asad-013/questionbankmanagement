@@ -1,18 +1,37 @@
 "use client";
 
 import { useState } from "react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteQuestion } from "@/lib/actions/admin";
 import { toast } from "sonner";
-import { Loader2, Trash2, Eye, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Loader2, Trash2, Eye, FileText, CheckCircle, XCircle, Clock, Calendar, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Modal } from "@/components/ui/modal";
 
 export function ContentTable({ questions }: { questions: any[] }) {
     const [loadingIds, setLoadingIds] = useState<string[]>([]);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to permanently delete this question?")) return;
+    const openDeleteModal = (id: string) => {
+        setSelectedDeleteId(id);
+        setDeleteModalOpen(true);
+    };
 
+    const handleDelete = async () => {
+        if (!selectedDeleteId) return;
+
+        const id = selectedDeleteId;
+        setDeleteModalOpen(false);
         setLoadingIds(prev => [...prev, id]);
         toast.loading("Deleting question...");
 
@@ -22,82 +41,153 @@ export function ContentTable({ questions }: { questions: any[] }) {
         setLoadingIds(prev => prev.filter(qid => qid !== id));
 
         if (success) {
-            toast.success("Question deleted");
+            toast.success("Question deleted permanently");
         } else {
             toast.error(error || "Failed to delete");
         }
+        setSelectedDeleteId(null);
     };
 
-    const getStatusIcon = (status: string) => {
+    const getStatusConfig = (status: string) => {
         switch (status) {
-            case 'approved': return <CheckCircle className="h-4 w-4 text-green-500" />;
-            case 'rejected': return <XCircle className="h-4 w-4 text-red-500" />;
-            default: return <Clock className="h-4 w-4 text-yellow-500" />;
+            case 'approved': return { icon: CheckCircle, className: "bg-green-500/10 text-green-600 border-green-200" };
+            case 'rejected': return { icon: XCircle, className: "bg-red-500/10 text-red-600 border-red-200" };
+            default: return { icon: Clock, className: "bg-yellow-500/10 text-yellow-600 border-yellow-200" };
         }
     };
 
     return (
-        <div className="rounded-md border bg-card shadow-sm">
-            <table className="w-full text-sm text-left">
-                <thead className="bg-muted/50 text-muted-foreground font-medium">
-                    <tr>
-                        <th className="p-4">Status</th>
-                        <th className="p-4">Details</th>
-                        <th className="p-4">Exam Info</th>
-                        <th className="p-4 hidden md:table-cell">Uploaded Info</th>
-                        <th className="p-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y">
-                    {questions.map((q) => (
-                        <tr key={q.id} className="hover:bg-muted/30 transition-colors">
-                            <td className="p-4">
-                                <div className="flex items-center gap-2" title={q.status}>
-                                    {getStatusIcon(q.status)}
-                                    <span className="capitalize hidden sm:inline">{q.status}</span>
-                                </div>
-                            </td>
-                            <td className="p-4">
-                                <div className="font-medium text-foreground">{q.courses?.code}</div>
-                                <div className="text-xs text-muted-foreground truncate max-w-[150px]">{q.courses?.title}</div>
-                            </td>
-                            <td className="p-4">
-                                <div className="text-foreground">{q.exam_names?.name}</div>
-                                <div className="text-xs text-muted-foreground">{q.exam_year} • {q.session}</div>
-                            </td>
-                            <td className="p-4 hidden md:table-cell text-muted-foreground">
-                                {new Date(q.created_at).toLocaleDateString()}
-                            </td>
-                            <td className="p-4 text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => window.open(q.image_url, '_blank')}
-                                        title="View Image"
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden animate-in fade-in duration-500">
+            <Table>
+                <TableHeader>
+                    <TableRow className="bg-muted/50">
+                        <TableHead className="w-[100px]">Status</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Exam Info</TableHead>
+                        <TableHead className="hidden lg:table-cell">Uploader</TableHead>
+                        <TableHead className="hidden md:table-cell">Uploaded Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {questions.map((q) => {
+                        const config = getStatusConfig(q.status);
+                        return (
+                            <TableRow key={q.id} className="group transition-colors">
+                                <TableCell>
+                                    <Badge
+                                        variant="outline"
+                                        className={cn("gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", config.className)}
                                     >
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        disabled={loadingIds.includes(q.id)}
-                                        onClick={() => handleDelete(q.id)}
-                                        title="Delete Permanently"
-                                    >
-                                        {loadingIds.includes(q.id) ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Trash2 className="h-4 w-4" />
-                                        )}
-                                    </Button>
+                                        <config.icon className="h-3 w-3" />
+                                        {q.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col min-w-0">
+                                        <div className="font-bold text-foreground truncate">{q.courses?.code || "N/A"}</div>
+                                        <div className="text-[10px] text-muted-foreground truncate max-w-[150px] opacity-70">
+                                            {q.courses?.title || "No Title"}
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="text-sm font-medium">{q.exam_names?.name || "Unknown Exam"}</div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                        {q.exam_year} • {q.session}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="hidden lg:table-cell">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                                            {q.uploader?.email || "System/Unknown"}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground">User ID: {q.created_by?.slice(0, 8)}...</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-mono">
+                                        <Calendar className="h-3 w-3" />
+                                        {new Date(q.created_at).toLocaleDateString()}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+                                            onClick={() => window.open(q.image_url, '_blank')}
+                                            title="View Image"
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                            disabled={loadingIds.includes(q.id)}
+                                            onClick={() => openDeleteModal(q.id)}
+                                            title="Delete Permanently"
+                                        >
+                                            {loadingIds.includes(q.id) ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
+                    {questions.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">
+                                <div className="flex flex-col items-center gap-2">
+                                    <FileText className="h-8 w-8 opacity-20" />
+                                    <span>No content found in the inventory.</span>
                                 </div>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                title="Confirm Deletion"
+            >
+                <div className="flex flex-col items-center gap-6 text-center">
+                    <div className="h-16 w-16 bg-destructive/10 rounded-full flex items-center justify-center animate-pulse">
+                        <AlertTriangle className="h-8 w-8 text-destructive" />
+                    </div>
+                    <div className="space-y-2">
+                        <h4 className="text-lg font-bold text-foreground">Are you absolutely sure?</h4>
+                        <p className="text-sm text-muted-foreground max-w-xs transition-colors">
+                            This will permanently remove this resource from the database. This action is irreversible.
+                        </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full pt-2">
+                        <Button
+                            variant="outline"
+                            className="flex-1 h-11 order-2 sm:order-1"
+                            onClick={() => setDeleteModalOpen(false)}
+                        >
+                            No, Keep it
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            className="flex-1 h-11 font-bold shadow-lg shadow-destructive/20 order-1 sm:order-2"
+                            onClick={handleDelete}
+                        >
+                            Yes, Delete Paper
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

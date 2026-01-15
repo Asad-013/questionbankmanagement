@@ -110,9 +110,9 @@ export default function ModerationPage() {
         <div className="space-y-8 max-w-6xl mx-auto">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Moderation Queue</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Pending Reviews</h1>
                     <p className="text-muted-foreground mt-2">
-                        Review and manage {questions.length} pending submissions.
+                        Verify and approve {questions.length} pending academic submissions.
                     </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={fetchQuestions}>

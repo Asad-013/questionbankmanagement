@@ -38,6 +38,19 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-aurora: aurora 60s linear infinite;
+  --shadow-toast: 0px 32px 64px -16px rgba(0, 0, 0, 0.30), 0px 16px 32px -8px rgba(0, 0, 0, 0.30), 0px 8px 16px -4px rgba(0, 0, 0, 0.24), 0px 4px 8px -2px rgba(0, 0, 0, 0.24), 0px -8px 16px -1px rgba(0, 0, 0, 0.16), 0px 2px 4px -1px rgba(0, 0, 0, 0.24), 0px 0px 0px 1px rgba(0, 0, 0, 1.00), inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08), inset 0px 1px 0px 0px rgba(255, 255, 255, 0.20);
+
+  @keyframes aurora {
+    from {
+      background-position: 50% 50%, 50% 50%;
+    }
+
+    to {
+      background-position: 350% 50%, 350% 50%;
+    }
+  }
 }
 
 :root {
@@ -68,7 +81,7 @@
   --accent-foreground: oklch(0.205 0 0);
 
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
 
   --border: oklch(0.92 0 0);
   --input: oklch(0.92 0 0);
@@ -104,7 +117,7 @@
   --accent-foreground: oklch(0.985 0 0);
 
   --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive-foreground: oklch(0.985 0 0);
 
   --border: oklch(0.2 0.02 265);
   --input: oklch(0.2 0.02 265);
@@ -114,10 +127,22 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
 
+  html,
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer components {
+  .container {
+    @apply mx-auto px-4 md:px-6 lg:px-8;
   }
 }

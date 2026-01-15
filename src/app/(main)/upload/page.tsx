@@ -10,14 +10,14 @@ export default async function UploadPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-            <div className="container max-w-5xl py-12 md:py-20">
+            <div className="container mx-auto px-4 max-w-5xl py-12 md:py-20">
                 <div className="text-center mb-12 space-y-4">
                     <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm bg-background shadow-sm text-primary font-medium mb-4">
                         <Sparkles className="h-3 w-3 mr-2" /> Contribution Mode
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Upload a Question</h1>
+                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Support Your Classmates</h1>
                     <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Your contributions help thousands of students prepare better. Follow the steps below to archive a new exam paper.
+                        Uploading a single paper saves hours for everyone. Help build the most comprehensive archive for ILET Leather Engineering students.
                     </p>
                 </div>
 

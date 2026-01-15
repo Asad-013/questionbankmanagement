@@ -42,7 +42,7 @@ export function QuestionFilters({ departments, examNames }: QuestionFiltersProps
     ].filter(Boolean).length;
 
     return (
-        <Card className="sticky top-24 shadow-sm border-none bg-muted/30">
+        <Card className="sticky top-24 shadow-sm border-border/40 bg-card/50 backdrop-blur-sm">
             <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">

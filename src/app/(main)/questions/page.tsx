@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { getTaxonomyItems } from "@/lib/actions/taxonomy";
 import { getQuestions } from "@/lib/actions/questions";
 import { QuestionFilters } from "@/components/features/questions/QuestionFilters";
-import { QuestionCard } from "@/components/features/questions/QuestionCard";
+import { QuestionList } from "@/components/features/questions/QuestionList";
 import { Loader2, SearchX } from "lucide-react";
 
 export default async function QuestionsPage(props: {
@@ -45,29 +45,26 @@ export default async function QuestionsPage(props: {
 
                 {/* Main Content */}
                 <div className="flex-1 min-h-[500px]">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b">
-                        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
+                        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-primary/50 animate-pulse" />
                             Showing {questions?.length || 0} Results
                         </h2>
                         {/* Optional Sort Dropdown could go here */}
                     </div>
 
                     {!questions || questions.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/30 rounded-3xl border-2 border-dashed border-muted-foreground/10">
-                            <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-6">
-                                <SearchX className="h-10 w-10 text-muted-foreground" />
+                        <div className="flex flex-col items-center justify-center py-32 text-center bg-muted/20 rounded-3xl border border-dashed border-border/50">
+                            <div className="bg-muted/50 p-6 rounded-full mb-6 animate-pulse">
+                                <SearchX className="h-10 w-10 text-muted-foreground/50" />
                             </div>
                             <h3 className="text-xl font-bold mb-2">No Matching Questions Filtered</h3>
-                            <p className="text-muted-foreground max-w-md mx-auto">
+                            <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
                                 We couldn't find any questions matching your current filters. Try resetting the filters or searching for a different keyword.
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {questions.map((q) => (
-                                <QuestionCard key={q.id} question={q} />
-                            ))}
-                        </div>
+                        <QuestionList questions={questions} />
                     )}
                 </div>
             </div>

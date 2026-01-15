@@ -12,7 +12,7 @@ export default function MainLayout({
                 {children}
             </main>
             <footer className="py-8 border-t bg-muted/40 mt-auto">
-                <div className="container flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+                <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
                     <div>
                         &copy; {new Date().getFullYear()} ILET Platform
                     </div>

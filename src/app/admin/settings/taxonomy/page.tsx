@@ -4,10 +4,9 @@ export default function TaxonomyPage() {
     return (
         <div className="space-y-8 max-w-5xl mx-auto">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Taxonomy Management</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Academic Setup</h1>
                 <p className="text-muted-foreground mt-2">
-                    Manage the standardized lists used for categorizing questions.
-                    Changes here affect all upload forms and filters.
+                    Configure the Departments, Exam Types, and Courses for the ILET Archive.
                 </p>
             </div>
 

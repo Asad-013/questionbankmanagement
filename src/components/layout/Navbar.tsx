@@ -61,16 +61,18 @@ export function Navbar() {
     return (
         <header
             className={cn(
-                "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent",
-                scrolled ? "bg-background/80 backdrop-blur-md border-border shadow-sm h-16" : "bg-transparent h-20"
+                "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b bg-background/95 backdrop-blur-md border-border shadow-sm h-16"
             )}
         >
-            <div className="container h-full flex items-center justify-between">
+            <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
                     <div className="h-9 w-9 bg-primary text-primary-foreground rounded-xl flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-                        I
+                        DU
                     </div>
-                    <span className="font-bold text-lg tracking-tight">ILET</span>
+                    <div className="flex flex-col leading-none">
+                        <span className="font-bold text-lg tracking-tight">ILET</span>
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Question Bank</span>
+                    </div>
                 </Link>
 
                 {/* Desktop Nav */}

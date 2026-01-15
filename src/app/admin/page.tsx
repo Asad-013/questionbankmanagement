@@ -8,8 +8,8 @@ export default async function AdminDashboard() {
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-                <p className="text-muted-foreground">Overview of the platform performance.</p>
+                <h2 className="text-3xl font-bold tracking-tight">Admin Overview</h2>
+                <p className="text-muted-foreground">Platform performance and statistics.</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -62,19 +62,24 @@ export default async function AdminDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-8">
-                            {/* Dummy activity feed for visual richness */}
-                            {[1, 2, 3].map((i) => (
-                                <div className="flex items-center" key={i}>
-                                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                        USR
+                            {stats.recentActivity.length > 0 ? (
+                                stats.recentActivity.map((activity: any) => (
+                                    <div className="flex items-center" key={activity.id}>
+                                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                            {activity.type === 'question' ? 'DOC' : 'USR'}
+                                        </div>
+                                        <div className="ml-4 space-y-1">
+                                            <p className="text-sm font-medium leading-none">{activity.title}</p>
+                                            <p className="text-xs text-muted-foreground">{activity.description}</p>
+                                        </div>
+                                        <div className="ml-auto font-medium text-xs text-muted-foreground">
+                                            {new Date(activity.time).toLocaleDateString()}
+                                        </div>
                                     </div>
-                                    <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">New question submitted</p>
-                                        <p className="text-xs text-muted-foreground">User {i} uploaded "Fall 2025 Physics"</p>
-                                    </div>
-                                    <div className="ml-auto font-medium text-xs text-muted-foreground">+1m ago</div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground italic">No recent activity</div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -85,16 +90,20 @@ export default async function AdminDashboard() {
                     <CardContent>
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm">Database</span>
-                                <span className="flex items-center text-green-600 text-xs font-medium"><div className="h-2 w-2 bg-green-600 rounded-full mr-2" /> Healthy</span>
+                                <span className="text-sm">Database Connection</span>
+                                <span className="flex items-center text-green-600 text-xs font-medium"><div className="h-2 w-2 bg-green-600 rounded-full mr-2" /> Connected</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-sm">Storage</span>
-                                <span className="flex items-center text-green-600 text-xs font-medium"><div className="h-2 w-2 bg-green-600 rounded-full mr-2" /> Healthy</span>
+                                <span className="text-sm">Edge Functions</span>
+                                <span className="flex items-center text-green-600 text-xs font-medium"><div className="h-2 w-2 bg-green-600 rounded-full mr-2" /> Global</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-sm">API Latency</span>
-                                <span className="text-xs text-muted-foreground">45ms</span>
+                                <span className="text-sm">Active Storage</span>
+                                <span className="flex items-center text-green-600 text-xs font-medium"><div className="h-2 w-2 bg-green-600 rounded-full mr-2" /> Cloud</span>
+                            </div>
+                            <div className="flex items-center justify-between pt-2 border-t">
+                                <span className="text-sm font-semibold">Uptime</span>
+                                <span className="text-xs text-muted-foreground">99.9%</span>
                             </div>
                         </div>
                     </CardContent>

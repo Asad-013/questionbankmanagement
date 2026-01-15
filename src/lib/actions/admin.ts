@@ -14,11 +14,13 @@ export async function getAdminStats() {
         { count: questionsCount },
         { count: pendingCount },
         { count: departmentsCount },
+        { data: recentQuestions },
     ] = await Promise.all([
         supabase.from("users").select("*", { count: "exact", head: true }),
         supabase.from("questions").select("*", { count: "exact", head: true }),
         supabase.from("questions").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("departments").select("*", { count: "exact", head: true }),
+        supabase.from("questions").select("*, departments(name)").order("created_at", { ascending: false }).limit(5),
     ]);
 
     return {
@@ -26,6 +28,13 @@ export async function getAdminStats() {
         totalQuestions: questionsCount || 0,
         pendingQuestions: pendingCount || 0,
         totalDepartments: departmentsCount || 0,
+        recentActivity: (recentQuestions || []).map(q => ({
+            id: q.id,
+            type: "question",
+            title: `New question: ${q.exam_year}`,
+            description: `A question for ${q.departments?.name || "unknown department"} was uploaded.`,
+            time: q.created_at,
+        })),
     };
 }
 
@@ -77,7 +86,8 @@ export async function getAllContent() {
           *,
           departments(name),
           exam_names(name),
-          courses(code)
+          courses(code),
+          uploader:users!created_by(email)
       `)
         .order("created_at", { ascending: false });
 

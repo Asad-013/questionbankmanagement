@@ -7,8 +7,8 @@ export default async function UsersPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
-                <p className="text-muted-foreground">Manage user roles and access.</p>
+                <h2 className="text-3xl font-bold tracking-tight">Member Directory</h2>
+                <p className="text-muted-foreground">Manage ILET community members and their access levels.</p>
             </div>
             <UserTable users={users || []} />
         </div>

@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
 
-export function AdminSidebar() {
+const navItems = [
+    { href: "/admin", label: "Admin Overview", icon: LayoutDashboard },
+    { href: "/admin/content", label: "Question Archive", icon: FileText },
+    { href: "/admin/moderation", label: "Pending Reviews", icon: CheckSquare },
+    { href: "/admin/users", label: "Member Directory", icon: Users },
+    { href: "/admin/settings/taxonomy", label: "Academic Setup", icon: Settings },
+];
+
+export function AdminSidebar({ className }: { className?: string }) {
     const pathname = usePathname();
 
     const isActive = (path: string) => {
@@ -15,50 +23,25 @@ export function AdminSidebar() {
     };
 
     return (
-        <aside className="w-64 border-r bg-muted/30 hidden md:flex md:flex-col h-screen sticky top-0">
+        <aside className={cn("w-64 border-r bg-muted/30 flex flex-col h-full", className)}>
             <div className="p-6">
-                <Link href="/"><h2 className="text-lg font-bold tracking-tight text-primary cursor-pointer">ILET Admin</h2></Link>
+                <Link href="/"><h2 className="text-lg font-bold tracking-tight text-primary cursor-pointer leading-tight underline underline-offset-4 decoration-primary/30">ILET DU Admin</h2></Link>
             </div>
             <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-                <Link href="/admin">
-                    <Button
-                        variant={pathname === "/admin" ? "secondary" : "ghost"}
-                        className={cn("w-full justify-start transition-colors", pathname === "/admin" && "bg-secondary/50 font-semibold")}
-                    >
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Dashboard
-                    </Button>
-                </Link>
-                <Link href="/admin/moderation">
-                    <Button
-                        variant={isActive("/admin/moderation") ? "secondary" : "ghost"}
-                        className={cn("w-full justify-start transition-colors", isActive("/admin/moderation") && "bg-secondary/50 font-semibold")}
-                    >
-                        <CheckSquare className="mr-2 h-4 w-4" />
-                        Moderation Queue
-                    </Button>
-                </Link>
-                <Link href="/admin/users">
-                    <Button
-                        variant={isActive("/admin/users") ? "secondary" : "ghost"}
-                        className={cn("w-full justify-start transition-colors", isActive("/admin/users") && "bg-secondary/50 font-semibold")}
-                    >
-                        <Users className="mr-2 h-4 w-4" />
-                        Users
-                    </Button>
-                </Link>
-                <div className="pt-4 pb-2">
-                    <h3 className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Settings</h3>
-                </div>
-                <Link href="/admin/settings/taxonomy">
-                    <Button
-                        variant={isActive("/admin/settings/taxonomy") ? "secondary" : "ghost"}
-                        className={cn("w-full justify-start transition-colors", isActive("/admin/settings/taxonomy") && "bg-secondary/50 font-semibold")}
-                    >
-                        <Settings className="mr-2 h-4 w-4" />
-                        Taxonomy Managers
-                    </Button>
-                </Link>
+                {navItems.map((item) => (
+                    <Link key={item.href} href={item.href}>
+                        <Button
+                            variant={isActive(item.href) ? "secondary" : "ghost"}
+                            className={cn(
+                                "w-full justify-start transition-colors",
+                                isActive(item.href) && "bg-secondary/50 font-semibold"
+                            )}
+                        >
+                            <item.icon className="mr-2 h-4 w-4" />
+                            {item.label}
+                        </Button>
+                    </Link>
+                ))}
             </nav>
             <div className="p-4 border-t bg-background/50">
                 <form action={logout}>

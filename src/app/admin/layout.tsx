@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { AdminHeader } from "@/components/features/admin/AdminHeader";
 import { AdminSidebar } from "@/components/features/admin/AdminSidebar";
 
 export default async function AdminLayout({
@@ -23,29 +24,20 @@ export default async function AdminLayout({
         .single();
 
     if (!profile || profile.role !== "admin") {
-        // Ideally show a 403 or redirect to home with a toast/error?
-        // For now, redirect to home.
         redirect("/");
     }
 
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
-            <AdminSidebar />
+        <div className="flex min-h-screen bg-background text-foreground overflow-hidden">
+            <AdminSidebar className="hidden md:flex sticky top-0 h-screen" />
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto h-screen">
-                <header className="h-16 border-b flex items-center px-6 sticky top-0 bg-background/95 backdrop-blur z-10 justify-between">
-                    <h1 className="font-semibold text-lg">Admin Panel</h1>
-                    <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">AD</div>
-                        <div className="text-sm">
-                            <p className="font-medium">Admin User</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
-                        </div>
+            <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+                <AdminHeader userEmail={user.email || ""} />
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
+                        {children}
                     </div>
-                </header>
-                <div className="p-8 pb-20">
-                    {children}
                 </div>
             </main>
         </div>
