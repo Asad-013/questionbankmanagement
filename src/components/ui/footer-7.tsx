@@ -62,7 +62,7 @@ export const Footer7 = ({
                     <div className="space-y-6">
                         <h3 className="font-bold text-sm uppercase tracking-widest text-primary/80">Support</h3>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                            Questions? Contact your department administration or report issues via the portal.
+                            Questions? Contact department administration or <a href="/feedback" className="text-primary hover:underline font-semibold">Give Feedback</a>.
                         </p>
                         <ul className="flex flex-wrap gap-4 text-xs font-semibold uppercase tracking-tighter">
                             {legalLinks.map((link, idx) => (
@@ -72,11 +72,6 @@ export const Footer7 = ({
                                     </a>
                                 </li>
                             ))}
-                            <li>
-                                <a href="/admin" className="text-primary hover:underline transition-colors border-l pl-4 border-primary/20">
-                                    Admin Portal
-                                </a>
-                            </li>
                         </ul>
                     </div>
                 </div>

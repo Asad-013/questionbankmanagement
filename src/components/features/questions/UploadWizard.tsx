@@ -20,9 +20,10 @@ import { Badge } from "@/components/ui/badge";
 interface UploadWizardProps {
     departments: any[];
     examNames: any[];
+    academicYears: any[];
 }
 
-export function UploadWizard({ departments, examNames }: UploadWizardProps) {
+export function UploadWizard({ departments, examNames, academicYears }: UploadWizardProps) {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [courses, setCourses] = useState<any[]>([]);
@@ -211,13 +212,18 @@ export function UploadWizard({ departments, examNames }: UploadWizardProps) {
                                         <div className="absolute right-3 top-3.5 pointer-events-none opacity-50"><ChevronRight className="rotate-90 h-4 w-4" /></div>
                                     </div>
 
-                                    <Input
-                                        type="number"
-                                        placeholder="Year (e.g. 2025)"
-                                        {...register("exam_year", { valueAsNumber: true })}
-                                        className="h-11"
-                                        min={2000}
-                                    />
+                                    <div className="relative">
+                                        <select
+                                            {...register("exam_year", { valueAsNumber: true })}
+                                            className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm appearance-none"
+                                        >
+                                            <option value="">Year</option>
+                                            {academicYears?.map(y => (
+                                                <option key={y.id} value={y.name}>{y.name}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-3 top-3.5 pointer-events-none opacity-50"><ChevronRight className="rotate-90 h-4 w-4" /></div>
+                                    </div>
 
                                     <div className="relative">
                                         <select

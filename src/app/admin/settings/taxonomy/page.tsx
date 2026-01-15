@@ -14,18 +14,28 @@ export default function TaxonomyPage() {
                 <TaxonomyManager
                     type="departments"
                     title="Departments"
-                    description="Manage university departments (e.g., Computer Science, Electrical Engineering)."
+                    description="Manage university departments (e.g., Leather Engineering, Footwear Engineering)."
                     fields={[
                         { name: "name", label: "Department Name", type: "text" },
-                        { name: "code", label: "Code (e.g. CSE)", type: "text" },
+                        { name: "code", label: "Code (e.g. LE)", type: "text" },
                         { name: "active", label: "Active", type: "boolean" },
                     ]}
                 />
 
                 <TaxonomyManager
+                    type="academic_years"
+                    title="Session Years"
+                    description="Available years for exam papers (e.g., 2026, 2025)."
+                    fields={[
+                        { name: "name", label: "Year", type: "text" },
+                        { name: "is_active", label: "Active", type: "boolean" },
+                    ]}
+                />
+
+                <TaxonomyManager
                     type="exam_names"
-                    title="Exam Names"
-                    description="Standardized exam names (e.g., Midterm Spring 2026, Final Fall 2025)."
+                    title="Exam Types"
+                    description="Standardized exam names (e.g., Midterm, Final, Supplementary)."
                     fields={[
                         { name: "name", label: "Exam Name", type: "text" },
                         { name: "is_active", label: "Active", type: "boolean" },

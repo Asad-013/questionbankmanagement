@@ -3,9 +3,10 @@ import { UploadWizard } from "@/components/features/questions/UploadWizard";
 import { Sparkles } from "lucide-react";
 
 export default async function UploadPage() {
-    const [departments, examNames] = await Promise.all([
+    const [departments, examNames, academicYears] = await Promise.all([
         getTaxonomyItems("departments"),
         getTaxonomyItems("exam_names"),
+        getTaxonomyItems("academic_years"),
     ]);
 
     return (
@@ -29,6 +30,7 @@ export default async function UploadPage() {
                     <UploadWizard
                         departments={departments || []}
                         examNames={examNames || []}
+                        academicYears={academicYears || []}
                     />
                 </div>
             </div>

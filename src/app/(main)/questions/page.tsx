@@ -11,14 +11,16 @@ export default async function QuestionsPage(props: {
     const searchParams = await props.searchParams;
 
     // Simulate slight delay for skeleton test if needed, but for now direct
-    const [departments, examNames, questions] = await Promise.all([
+    const [departments, examNames, academicYears, questions] = await Promise.all([
         getTaxonomyItems("departments"),
         getTaxonomyItems("exam_names"),
+        getTaxonomyItems("academic_years"),
         getQuestions({
             department_id: searchParams.department_id,
             course_id: searchParams.course_id,
             exam_name_id: searchParams.exam_name_id,
             search: searchParams.search,
+            year: searchParams.year,
         }),
     ]);
 
@@ -39,6 +41,7 @@ export default async function QuestionsPage(props: {
                         <QuestionFilters
                             departments={departments || []}
                             examNames={examNames || []}
+                            academicYears={academicYears || []}
                         />
                     </Suspense>
                 </aside>

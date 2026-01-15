@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export type TaxonomyType = "exam_names" | "courses" | "departments";
+export type TaxonomyType = "exam_names" | "courses" | "departments" | "academic_years";
 
 export async function createTaxonomyItem(
     type: TaxonomyType,

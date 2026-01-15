@@ -5,7 +5,7 @@ import { login } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, Mail, Lock, Eye, EyeOff, Shield } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -109,7 +109,7 @@ export default function LoginPage() {
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
                             <span className="bg-card px-2 text-muted-foreground">
-                                Student or Staff
+                                Access Archive
                             </span>
                         </div>
                     </div>
@@ -118,18 +118,6 @@ export default function LoginPage() {
                         Don&apos;t have an account?{" "}
                         <Link href="/register" className="font-semibold text-primary hover:underline hover:text-primary/80 transition-colors">
                             Create an account
-                        </Link>
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-dashed border-border/50 text-center">
-                        <Link
-                            href="/admin"
-                            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all group"
-                        >
-                            <div className="h-6 w-6 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                                <Shield className="h-3.5 w-3.5" />
-                            </div>
-                            Administrative Portal
                         </Link>
                     </div>
                 </CardContent>

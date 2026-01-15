@@ -12,9 +12,10 @@ import { Badge } from "@/components/ui/badge";
 interface QuestionFiltersProps {
     departments: any[];
     examNames: any[];
+    academicYears: any[];
 }
 
-export function QuestionFilters({ departments, examNames }: QuestionFiltersProps) {
+export function QuestionFilters({ departments, examNames, academicYears }: QuestionFiltersProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -38,7 +39,8 @@ export function QuestionFilters({ departments, examNames }: QuestionFiltersProps
     const activeFiltersCount = [
         searchParams.get("search"),
         searchParams.get("department_id"),
-        searchParams.get("exam_name_id")
+        searchParams.get("exam_name_id"),
+        searchParams.get("year")
     ].filter(Boolean).length;
 
     return (
@@ -62,8 +64,8 @@ export function QuestionFilters({ departments, examNames }: QuestionFiltersProps
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search keywords..."
-                            className="pl-9 bg-background"
+                            placeholder="Course name, keywords..."
+                            className="pl-9 bg-background focus:ring-primary/20"
                             defaultValue={searchParams.get("search") || ""}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
@@ -106,6 +108,26 @@ export function QuestionFilters({ departments, examNames }: QuestionFiltersProps
                             <option value="">All Exams</option>
                             {examNames.map((e) => (
                                 <option key={e.id} value={e.id}>{e.name}</option>
+                            ))}
+                        </select>
+                        <div className="absolute right-3 top-3 pointer-events-none opacity-50">
+                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Years */}
+                <div className="space-y-2">
+                    <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Academic Year</Label>
+                    <div className="relative">
+                        <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none cursor-pointer hover:bg-accent/50 transition-colors"
+                            value={searchParams.get("year") || ""}
+                            onChange={(e) => handleFilterChange("year", e.target.value)}
+                        >
+                            <option value="">Any Year</option>
+                            {academicYears?.map((y) => (
+                                <option key={y.id} value={y.name}>{y.name}</option>
                             ))}
                         </select>
                         <div className="absolute right-3 top-3 pointer-events-none opacity-50">

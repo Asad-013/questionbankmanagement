@@ -39,6 +39,7 @@ export async function getQuestions(filters: {
     course_id?: string;
     exam_name_id?: string;
     search?: string;
+    year?: string;
 } = {}) {
     const supabase = await createClient();
     let query = supabase
@@ -61,9 +62,10 @@ export async function getQuestions(filters: {
     if (filters.exam_name_id) {
         query = query.eq("exam_name_id", filters.exam_name_id);
     }
+    if (filters.year) {
+        query = query.eq("exam_year", parseInt(filters.year));
+    }
     if (filters.search) {
-        // Basic text search on description or tags logic could go here
-        // For now, let's just search description if provided
         query = query.ilike("description", `%${filters.search}%`);
     }
 
