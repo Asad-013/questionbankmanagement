@@ -101,16 +101,41 @@ export async function getAllContent() {
 export async function deleteQuestion(id: string) {
     const supabase = await createClient();
 
-    // Verify admin
+    // Verify admin/moderator
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const { error } = await supabase
+    // Get question first to find image path
+    const { data: question, error: fetchError } = await supabase
+        .from("questions")
+        .select("image_url")
+        .eq("id", id)
+        .single();
+
+    if (fetchError || !question) {
+        return { success: false, error: "Question not found" };
+    }
+
+    // Delete from DB
+    const { error: dbError } = await supabase
         .from("questions")
         .delete()
         .eq("id", id);
 
-    if (error) return { success: false, error: error.message };
+    if (dbError) return { success: false, error: dbError.message };
+
+    // Try to delete from storage (cleanup)
+    if (question.image_url) {
+        try {
+            const fileName = question.image_url.split('/').pop();
+            if (fileName) {
+                await supabase.storage.from('questions').remove([fileName]);
+            }
+        } catch (storageErr) {
+            console.error("Failed to delete storage file:", storageErr);
+            // We don't return error here because the DB record is already gone
+        }
+    }
 
     revalidatePath("/admin/content");
     revalidatePath("/questions");
