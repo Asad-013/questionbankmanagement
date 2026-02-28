@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Settings, FileText, CheckSquare, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, FileText, CheckSquare, Users, LogOut, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
@@ -14,14 +14,19 @@ const navItems: NavItem[] = [
     { href: "/admin/content", label: "Question Archive", icon: FileText },
     { href: "/admin/moderation", label: "Pending Reviews", icon: CheckSquare },
     { href: "/admin/users", label: "Member Directory", icon: Users, adminOnly: true },
+    { href: "/admin/audit", label: "Audit Logs", icon: Activity, adminOnly: true },
     { href: "/admin/settings/taxonomy", label: "Academic Setup", icon: Settings, adminOnly: true },
 ];
 
 export function AdminSidebar({ className, role }: { className?: string, role?: string }) {
     const pathname = usePathname();
 
+    const basePath = role === "moderator" ? "/moderator" : "/admin";
+
     const isActive = (path: string) => {
-        return pathname === path || pathname?.startsWith(path + "/");
+        // Replace base path in nav item for active check
+        const actualPath = path.replace("/admin", basePath);
+        return pathname === actualPath || pathname?.startsWith(actualPath + "/");
     };
 
     return (
@@ -30,20 +35,23 @@ export function AdminSidebar({ className, role }: { className?: string, role?: s
                 <Link href="/"><h2 className="text-lg font-bold tracking-tight text-primary cursor-pointer leading-tight underline underline-offset-4 decoration-primary/30">ILET DU Admin</h2></Link>
             </div>
             <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-                {navItems.filter(item => !item.adminOnly || role === "admin").map((item) => (
-                    <Link key={item.href} href={item.href}>
-                        <Button
-                            variant={isActive(item.href) ? "secondary" : "ghost"}
-                            className={cn(
-                                "w-full justify-start transition-colors",
-                                isActive(item.href) && "bg-secondary/50 font-semibold"
-                            )}
-                        >
-                            <item.icon className="mr-2 h-4 w-4" />
-                            {item.label}
-                        </Button>
-                    </Link>
-                ))}
+                {navItems.filter(item => !item.adminOnly || role === "admin").map((item) => {
+                    const href = item.href.replace("/admin", basePath);
+                    return (
+                        <Link key={href} href={href}>
+                            <Button
+                                variant={isActive(item.href) ? "secondary" : "ghost"}
+                                className={cn(
+                                    "w-full justify-start transition-colors",
+                                    isActive(item.href) && "bg-secondary/50 font-semibold"
+                                )}
+                            >
+                                <item.icon className="mr-2 h-4 w-4" />
+                                {item.label}
+                            </Button>
+                        </Link>
+                    );
+                })}
             </nav>
             <div className="p-4 border-t bg-background/50">
                 <form action={logout}>

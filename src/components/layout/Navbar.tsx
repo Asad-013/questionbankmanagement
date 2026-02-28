@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Search, PlusCircle, LogIn, Menu, Shield } from "lucide-react";
+import { Search, PlusCircle, LogIn, Menu, Shield, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,7 +12,9 @@ export function Navbar() {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isModerator, setIsModerator] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [userProfile, setUserProfile] = useState<any>(null);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -29,12 +31,17 @@ export function Navbar() {
             if (user) {
                 const { data: profile } = await supabase
                     .from("users")
-                    .select("role")
+                    .select("role, full_name, email, avatar_url")
                     .eq("id", user.id)
                     .single();
 
-                if (profile?.role === "admin" || profile?.role === "moderator") {
+                setUserProfile(profile);
+
+                if (profile?.role === "admin") {
                     setIsAdmin(true);
+                } else if (profile?.role === "moderator") {
+                    setIsModerator(true);
+                    setIsAdmin(true); // Treat as admin for conditional UI rendering
                 }
             }
         };
@@ -49,7 +56,11 @@ export function Navbar() {
     ];
 
     if (isAdmin) {
-        navLinks.push({ href: "/admin", label: "Admin Panel", icon: <Shield className="w-4 h-4 mr-1" /> });
+        navLinks.push({
+            href: isModerator ? "/moderator" : "/admin",
+            label: isModerator ? "Moderator Panel" : "Admin Panel",
+            icon: <Shield className="w-4 h-4 mr-1" />
+        });
     }
 
     const handleSignOut = async () => {
@@ -97,14 +108,42 @@ export function Navbar() {
                 <div className="flex items-center gap-3">
                     {user ? (
                         <>
-                            {/* Mobile Only Admin Link if hidden on desktop? No, added to navLinks above. */}
+                            <Link href="/notifications">
+                                <Button variant="ghost" size="icon" className="relative group">
+                                    <Bell className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                    <span className="absolute top-1 right-1 flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                    </span>
+                                </Button>
+                            </Link>
+                            <Link href="/profile">
+                                <Button variant="ghost" size="sm" className="font-medium text-foreground relative h-8 rounded-full pr-3 pl-1 object-cover">
+                                    {userProfile?.avatar_url ? (
+                                        <img
+                                            src={userProfile.avatar_url}
+                                            alt="Profile"
+                                            className="h-6 w-6 rounded-full object-cover mr-2"
+                                            referrerPolicy="no-referrer"
+                                        />
+                                    ) : (
+                                        <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center mr-2 text-xs">
+                                            {userProfile?.full_name ? userProfile.full_name[0].toUpperCase() : userProfile?.email?.[0].toUpperCase() || "U"}
+                                        </div>
+                                    )}
+                                    <span className="hidden md:flex">
+                                        {userProfile?.full_name?.split(' ')[0] || "Profile"}
+                                    </span>
+                                </Button>
+                            </Link>
+
                             <Button variant="ghost" size="sm" onClick={handleSignOut}>
                                 Sign Out
                             </Button>
                             {isAdmin && (
-                                <Link href="/admin">
+                                <Link href={isModerator ? "/moderator" : "/admin"}>
                                     <Button size="sm" variant="secondary" className="hidden md:flex">
-                                        Admin
+                                        {isModerator ? "Moderator" : "Admin"}
                                     </Button>
                                 </Link>
                             )}

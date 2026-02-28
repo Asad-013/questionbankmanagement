@@ -2,9 +2,10 @@
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, BookOpen, Clock, Download, Eye } from "lucide-react";
+import { Calendar, BookOpen, Clock, Download, Eye, X, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,8 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question, isSelected, onSelect }: QuestionCardProps) {
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
+
     const handleDownload = async () => {
         if (!question.image_url) return;
 
@@ -69,7 +72,7 @@ export function QuestionCard({ question, isSelected, onSelect }: QuestionCardPro
                         className="rounded-full bg-white/90 text-black hover:bg-white shadow-lg font-medium"
                         onClick={(e) => {
                             e.stopPropagation();
-                            window.open(question.image_url, '_blank');
+                            setIsViewerOpen(true);
                         }}
                     >
                         <Eye className="h-4 w-4 mr-2" /> View
@@ -143,6 +146,56 @@ export function QuestionCard({ question, isSelected, onSelect }: QuestionCardPro
                     }}
                 />
             </CardFooter>
+
+            {/* Advanced Full Screen Image Viewer */}
+            {isViewerOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-200 cursor-zoom-out"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsViewerOpen(false);
+                    }}
+                >
+                    <div className="absolute top-4 right-4 flex gap-4 z-[101]">
+                        <Button
+                            variant="outline"
+                            className="rounded-full bg-black/50 text-white border-white/20 hover:bg-white hover:text-black font-medium transition-all"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownload();
+                            }}
+                        >
+                            <Download className="h-4 w-4 mr-2" /> Download
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full bg-black/50 text-white border-white/20 hover:bg-red-500 hover:text-white transition-all hover:border-red-500"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsViewerOpen(false);
+                            }}
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
+
+                    <div className="relative w-full h-full max-w-6xl max-h-[90vh] p-8 mt-12 flex flex-col items-center justify-center animate-in zoom-in-95 duration-300">
+                        {question.image_url && (
+                            <img
+                                src={question.image_url}
+                                alt="Full screen preview"
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl ring-1 ring-white/10"
+                                onClick={(e) => e.stopPropagation()} // Prevent close when clicking the image itself
+                            />
+                        )}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-2 rounded-full backdrop-blur-md text-sm font-medium border border-white/10 shadow-xl flex items-center gap-2">
+                            <ZoomIn className="h-4 w-4 text-primary" />
+                            {question.courses?.code} - {question.exam_year}
+                        </div>
+                    </div>
+                </div>
+            )}
         </Card>
     );
 }

@@ -12,6 +12,18 @@ export async function createQuestion(data: UploadFormData, imagePath: string) {
         return { success: false, error: "Unauthorized" };
     }
 
+    // Rate Limiting: Max 5 uploads per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count } = await supabase
+        .from("questions")
+        .select("*", { count: 'exact', head: true })
+        .eq("created_by", user.id)
+        .gte("created_at", oneHourAgo);
+
+    if (count !== null && count >= 5) {
+        return { success: false, error: "Rate limit exceeded: You can only upload 5 questions per hour. Please try again later." };
+    }
+
     const { error } = await supabase.from("questions").insert({
         department_id: data.department_id,
         course_id: data.course_id,

@@ -71,7 +71,9 @@ export async function updateUserRole(userId: string, newRole: "admin" | "student
     const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
     if (profile?.role !== "admin") return { success: false, error: "Unauthorized: Admins only" };
 
-    // Self-demotion check could be added here, but allowing for now (risky but okay for demo)
+    if (userId === user.id) {
+        return { success: false, error: "You cannot change your own role." };
+    }
 
     const { error } = await supabase
         .from("users")
@@ -80,7 +82,16 @@ export async function updateUserRole(userId: string, newRole: "admin" | "student
 
     if (error) return { success: false, error: error.message };
 
-    revalidatePath("/admin/users");
+    // Audit Log
+    await supabase.from("audit_logs").insert({
+        action: "UPDATE_ROLE",
+        entity_type: "user",
+        entity_id: userId,
+        performed_by: user.id,
+        details: { oldRole: profile.role, newRole }
+    });
+
+    revalidatePath("/", "layout");
     return { success: true };
 }
 
@@ -122,7 +133,7 @@ export async function addModeratorByEmail(email: string) {
 
     if (updateError) return { success: false, error: updateError.message };
 
-    revalidatePath("/admin/users");
+    revalidatePath("/", "layout");
     return { success: true };
 }
 
@@ -140,6 +151,7 @@ export async function getAllContent() {
           courses(code),
           uploader:users!created_by(email)
       `)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
     if (error) throw new Error(error.message);
@@ -167,26 +179,22 @@ export async function deleteQuestion(id: string) {
         return { success: false, error: "Question not found" };
     }
 
-    // Delete from DB
+    // Update DB (Soft Delete)
     const { error: dbError } = await supabase
         .from("questions")
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq("id", id);
 
     if (dbError) return { success: false, error: dbError.message };
 
-    // Try to delete from storage (cleanup)
-    if (question.image_url) {
-        try {
-            const fileName = question.image_url.split('/').pop();
-            if (fileName) {
-                await supabase.storage.from('questions').remove([fileName]);
-            }
-        } catch (storageErr) {
-            console.error("Failed to delete storage file:", storageErr);
-            // We don't return error here because the DB record is already gone
-        }
-    }
+    // Log the Audit
+    await supabase.from("audit_logs").insert({
+        action: "DELETE_QUESTION",
+        entity_type: "question",
+        entity_id: id,
+        performed_by: user.id,
+        details: { soft_deleted: true }
+    });
 
     revalidatePath("/admin/content");
     revalidatePath("/questions");
