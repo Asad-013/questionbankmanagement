@@ -7,15 +7,17 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
 
-const navItems = [
+type NavItem = { href: string; label: string; icon: React.ElementType; adminOnly?: boolean };
+
+const navItems: NavItem[] = [
     { href: "/admin", label: "Admin Overview", icon: LayoutDashboard },
     { href: "/admin/content", label: "Question Archive", icon: FileText },
     { href: "/admin/moderation", label: "Pending Reviews", icon: CheckSquare },
-    { href: "/admin/users", label: "Member Directory", icon: Users },
-    { href: "/admin/settings/taxonomy", label: "Academic Setup", icon: Settings },
+    { href: "/admin/users", label: "Member Directory", icon: Users, adminOnly: true },
+    { href: "/admin/settings/taxonomy", label: "Academic Setup", icon: Settings, adminOnly: true },
 ];
 
-export function AdminSidebar({ className }: { className?: string }) {
+export function AdminSidebar({ className, role }: { className?: string, role?: string }) {
     const pathname = usePathname();
 
     const isActive = (path: string) => {
@@ -28,7 +30,7 @@ export function AdminSidebar({ className }: { className?: string }) {
                 <Link href="/"><h2 className="text-lg font-bold tracking-tight text-primary cursor-pointer leading-tight underline underline-offset-4 decoration-primary/30">ILET DU Admin</h2></Link>
             </div>
             <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-                {navItems.map((item) => (
+                {navItems.filter(item => !item.adminOnly || role === "admin").map((item) => (
                     <Link key={item.href} href={item.href}>
                         <Button
                             variant={isActive(item.href) ? "secondary" : "ghost"}

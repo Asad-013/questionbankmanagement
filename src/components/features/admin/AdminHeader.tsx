@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AdminSidebar } from "./AdminSidebar";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function AdminHeader({ userEmail }: { userEmail: string }) {
+export function AdminHeader({ userEmail, role }: { userEmail: string; role?: string }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     return (
@@ -32,7 +32,7 @@ export function AdminHeader({ userEmail }: { userEmail: string }) {
                     </Button>
                     <div className="flex items-center gap-3 pl-2 border-l ml-2">
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-medium leading-none">Admin User</p>
+                            <p className="text-sm font-medium leading-none capitalize">{role || "User"}</p>
                             <p className="text-[10px] text-muted-foreground mt-1">{userEmail}</p>
                         </div>
                         <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xs font-bold text-primary shadow-sm">
@@ -66,7 +66,7 @@ export function AdminHeader({ userEmail }: { userEmail: string }) {
                                     <X className="h-5 w-5" />
                                 </Button>
                             </div>
-                            <AdminSidebar className="w-full border-none" />
+                            <AdminSidebar className="w-full border-none" role={role} />
                         </motion.div>
                     </>
                 )}

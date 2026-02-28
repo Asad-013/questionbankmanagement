@@ -1,6 +1,16 @@
 import { TaxonomyManager } from "@/components/features/admin/TaxonomyManager";
 
-export default function TaxonomyPage() {
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+
+export default async function TaxonomyPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/login");
+
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") redirect("/admin");
+
     return (
         <div className="space-y-8 max-w-5xl mx-auto">
             <div>

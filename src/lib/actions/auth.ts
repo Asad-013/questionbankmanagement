@@ -63,6 +63,20 @@ export async function signup(formData: FormData) {
         return { error: error.message };
     }
 
+    if (authData.user) {
+        // Attempt to create public profile. If the user is automatically logged in, this succeeds due to the RLS authenticated insert policy.
+        const { error: profileError } = await supabase.from('users').insert({
+            id: authData.user.id,
+            email: authData.user.email as string,
+            role: parsed.data.role || "student",
+        });
+
+        if (profileError) {
+            console.error("Failed to create user profile in public.users:", profileError);
+        }
+    }
+
+
     revalidatePath("/", "layout");
     redirect("/");
 }

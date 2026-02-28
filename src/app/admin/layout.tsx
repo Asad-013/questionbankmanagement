@@ -23,17 +23,17 @@ export default async function AdminLayout({
         .eq("id", user.id)
         .single();
 
-    if (!profile || profile.role !== "admin") {
+    if (!profile || (profile.role !== "admin" && profile.role !== "moderator")) {
         redirect("/");
     }
 
     return (
         <div className="flex min-h-screen bg-background text-foreground overflow-hidden">
-            <AdminSidebar className="hidden md:flex sticky top-0 h-screen" />
+            <AdminSidebar className="hidden md:flex sticky top-0 h-screen" role={profile.role} />
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-                <AdminHeader userEmail={user.email || ""} />
+                <AdminHeader userEmail={user.email || ""} role={profile.role} />
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
                         {children}

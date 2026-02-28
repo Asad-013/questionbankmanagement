@@ -19,9 +19,7 @@ import { cn } from "@/lib/utils";
 export function UserTable({ users }: { users: any[] }) {
     const [loadingIds, setLoadingIds] = useState<string[]>([]);
 
-    const handleRoleUpdate = async (userId: string, currentRole: string) => {
-        const newRole = currentRole === 'admin' ? 'student' : 'admin';
-
+    const handleRoleUpdate = async (userId: string, newRole: "student" | "moderator" | "admin") => {
         setLoadingIds(prev => [...prev, userId]);
         toast.loading(`Updating role to ${newRole}...`);
 
@@ -83,22 +81,22 @@ export function UserTable({ users }: { users: any[] }) {
                                 })}
                             </TableCell>
                             <TableCell className="text-right">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 md:h-9"
-                                    disabled={loadingIds.includes(user.id)}
-                                    onClick={() => handleRoleUpdate(user.id, user.role)}
-                                >
-                                    {loadingIds.includes(user.id) ? (
-                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                        <Shield className="h-3 w-3 mr-2 text-primary" />
-                                    )}
-                                    <span className="hidden sm:inline">
-                                        {user.role === 'admin' ? "Demote" : "Promote"}
-                                    </span>
-                                </Button>
+                                {loadingIds.includes(user.id) ? (
+                                    <div className="flex justify-end pr-4">
+                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : (
+                                    <select
+                                        className="h-9 w-full md:w-32 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={user.role}
+                                        disabled={loadingIds.includes(user.id)}
+                                        onChange={(e) => handleRoleUpdate(user.id, e.target.value as any)}
+                                    >
+                                        <option value="student">Student</option>
+                                        <option value="moderator">Moderator</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))}

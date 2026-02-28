@@ -43,6 +43,12 @@ export async function getAdminStats() {
  */
 export async function getAllUsers() {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
+
     const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -62,6 +68,9 @@ export async function updateUserRole(userId: string, newRole: "admin" | "student
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") return { success: false, error: "Unauthorized: Admins only" };
+
     // Self-demotion check could be added here, but allowing for now (risky but okay for demo)
 
     const { error } = await supabase
@@ -70,6 +79,48 @@ export async function updateUserRole(userId: string, newRole: "admin" | "student
         .eq("id", userId);
 
     if (error) return { success: false, error: error.message };
+
+    revalidatePath("/admin/users");
+    return { success: true };
+}
+
+/**
+ * Add / Promote user to moderator by Email
+ */
+export async function addModeratorByEmail(email: string) {
+    const supabase = await createClient();
+
+    // Verify current user is admin
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") return { success: false, error: "Unauthorized: Admins only" };
+
+    if (!email || !email.trim()) return { success: false, error: "Email is required" };
+
+    // Find user by email
+    const { data: targetUser, error: findError } = await supabase
+        .from("users")
+        .select("id, role")
+        .eq("email", email.trim().toLowerCase())
+        .single();
+
+    if (findError || !targetUser) {
+        return { success: false, error: "User not found. They must register an account first." };
+    }
+
+    if (targetUser.role === "admin" || targetUser.role === "moderator") {
+        return { success: false, error: `User is already a ${targetUser.role}.` };
+    }
+
+    // Update role
+    const { error: updateError } = await supabase
+        .from("users")
+        .update({ role: "moderator" })
+        .eq("id", targetUser.id);
+
+    if (updateError) return { success: false, error: updateError.message };
 
     revalidatePath("/admin/users");
     return { success: true };
