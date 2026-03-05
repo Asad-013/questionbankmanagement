@@ -164,9 +164,12 @@ export async function getAllContent() {
 export async function deleteQuestion(id: string) {
     const supabase = await createClient();
 
-    // Verify admin/moderator
+    // Verify admin only can delete
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") return { success: false, error: "Unauthorized: Only Admins can delete questions" };
 
     // Get question first to find image path
     const { data: question, error: fetchError } = await supabase

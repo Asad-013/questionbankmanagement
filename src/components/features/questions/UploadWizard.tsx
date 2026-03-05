@@ -68,11 +68,11 @@ export function UploadWizard({ departments, examNames, academicYears }: UploadWi
     };
 
     const nextStep = async () => {
-        const isValid = await trigger();
-        if (step === 1 && isValid) {
-            setStep(2);
-        } else if (step === 2 && selectedImage) {
-            setStep(3);
+        if (step === 1) {
+            const isValid = await trigger(["department_id", "course_id", "exam_name_id", "exam_year"]);
+            if (isValid) setStep(2);
+        } else if (step === 2) {
+            if (selectedImage) setStep(3);
         }
     };
 

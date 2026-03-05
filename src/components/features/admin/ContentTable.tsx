@@ -17,7 +17,7 @@ import { Loader2, Trash2, Eye, FileText, CheckCircle, XCircle, Clock, Calendar, 
 import { cn } from "@/lib/utils";
 import { Modal } from "@/components/ui/modal";
 
-export function ContentTable({ questions }: { questions: any[] }) {
+export function ContentTable({ questions, isAdmin = true }: { questions: any[], isAdmin?: boolean }) {
     const [loadingIds, setLoadingIds] = useState<string[]>([]);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
@@ -122,20 +122,22 @@ export function ContentTable({ questions }: { questions: any[] }) {
                                         >
                                             <Eye className="h-4 w-4" />
                                         </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                            disabled={loadingIds.includes(q.id)}
-                                            onClick={() => openDeleteModal(q.id)}
-                                            title="Delete Permanently"
-                                        >
-                                            {loadingIds.includes(q.id) ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="h-4 w-4" />
-                                            )}
-                                        </Button>
+                                        {isAdmin && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                                disabled={loadingIds.includes(q.id)}
+                                                onClick={() => openDeleteModal(q.id)}
+                                                title="Delete Permanently"
+                                            >
+                                                {loadingIds.includes(q.id) ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="h-4 w-4" />
+                                                )}
+                                            </Button>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>
