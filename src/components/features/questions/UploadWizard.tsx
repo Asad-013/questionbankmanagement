@@ -3,15 +3,14 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Upload, ChevronRight, ChevronLeft, Check, Loader2, FileImage, LayoutGrid, Image as ImageIcon, Send } from "lucide-react";
+import { Upload, ChevronRight, ChevronLeft, Check, Loader2, FileImage, Image as ImageIcon, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { uploadSchema, type UploadFormData } from "@/lib/validations/upload";
 import { getCoursesByDepartment } from "@/lib/actions/taxonomy";
-import { createQuestion } from "@/lib/actions/questions";
-import { createClient } from "@/lib/supabase/client";
+import { uploadQuestion } from "@/lib/actions/questions";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -86,21 +85,17 @@ export function UploadWizard({ departments, examNames, academicYears }: UploadWi
         const toastId = toast.loading("Uploading question...");
 
         try {
-            const supabase = createClient();
-            const fileExt = selectedImage.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            // Build FormData — file upload handled server-side to bypass storage RLS
+            const formData = new FormData();
+            formData.append("file", selectedImage);
+            formData.append("department_id", data.department_id);
+            formData.append("course_id", data.course_id);
+            formData.append("exam_name_id", data.exam_name_id);
+            formData.append("exam_year", String(data.exam_year));
+            if (data.session) formData.append("session", data.session);
+            if (data.description) formData.append("description", data.description);
 
-            // Upload Image
-            const { error: uploadError } = await supabase.storage
-                .from("questions")
-                .upload(filePath, selectedImage);
-
-            if (uploadError) throw new Error(uploadError.message);
-
-            const { data: { publicUrl } } = supabase.storage.from("questions").getPublicUrl(filePath);
-
-            const result = await createQuestion(data, publicUrl);
+            const result = await uploadQuestion(formData);
 
             if (!result.success) throw new Error(result.error);
 
