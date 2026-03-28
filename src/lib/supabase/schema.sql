@@ -5,10 +5,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email VARCHAR(255) UNIQUE NOT NULL,
+  full_name VARCHAR(200),
+  phone_number VARCHAR(30),
+  bio TEXT,
+  avatar_url TEXT,
   role VARCHAR(50) DEFAULT 'student' CHECK (role IN ('student', 'moderator', 'admin')),
   email_verified BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTPTZ DEFAULT NOW(),
+  updated_at TIMESTPTZ DEFAULT NOW()
 );
 
 -- Create Departments table

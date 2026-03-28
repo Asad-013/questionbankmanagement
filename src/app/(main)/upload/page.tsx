@@ -1,8 +1,38 @@
 import { getTaxonomyItems } from "@/lib/actions/taxonomy";
+import { createClient } from "@/lib/supabase/server";
 import { UploadWizard } from "@/components/features/questions/UploadWizard";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Lock } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function UploadPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center space-y-6 max-w-md mx-auto px-4">
+                    <div className="mx-auto h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                        <Lock className="h-7 w-7 text-muted-foreground" />
+                    </div>
+                    <h1 className="text-2xl font-bold">Login Required</h1>
+                    <p className="text-muted-foreground">
+                        You need to be logged in to upload questions. Sign in or create an account to start contributing.
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                        <Button asChild>
+                            <Link href="/login">Sign In</Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href="/register">Create Account</Link>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     const [departments, examNames, academicYears] = await Promise.all([
         getTaxonomyItems("departments"),
         getTaxonomyItems("exam_names"),

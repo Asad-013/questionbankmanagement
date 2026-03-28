@@ -3,7 +3,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+async function requireModeratorOrAdmin() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+    if (!profile || (profile.role !== "admin" && profile.role !== "moderator")) {
+        throw new Error("Unauthorized: Moderators or admins only");
+    }
+
+    return { supabase, user };
+}
+
 export async function getPendingQuestions() {
+    await requireModeratorOrAdmin();
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -27,10 +46,7 @@ export async function getPendingQuestions() {
 }
 
 export async function approveQuestion(id: string) {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    const { supabase, user } = await requireModeratorOrAdmin();
 
     const { error } = await supabase
         .from("questions")
@@ -58,10 +74,7 @@ export async function approveQuestion(id: string) {
 }
 
 export async function rejectQuestion(id: string, reason: string) {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    const { supabase, user } = await requireModeratorOrAdmin();
 
     const { error } = await supabase
         .from("questions")

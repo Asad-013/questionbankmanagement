@@ -7,13 +7,15 @@ import { z } from "zod";
 
 const loginSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6),
+    password: z.string().min(1),
 });
 
 const registerSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6),
-    role: z.enum(["student", "admin"]).optional(), // Simplified for demo
+    password: z.string().min(8).regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    ),
 });
 
 export async function login(formData: FormData) {
@@ -36,7 +38,7 @@ export async function login(formData: FormData) {
     }
 
     revalidatePath("/", "layout");
-    redirect("/");
+    redirect("/?welcome=login");
 }
 
 export async function signup(formData: FormData) {
@@ -54,7 +56,7 @@ export async function signup(formData: FormData) {
         password: parsed.data.password,
         options: {
             data: {
-                role: parsed.data.role || "student",
+                role: "student",
             }
         }
     });
@@ -68,7 +70,7 @@ export async function signup(formData: FormData) {
         const { error: profileError } = await supabase.from('users').insert({
             id: authData.user.id,
             email: authData.user.email as string,
-            role: parsed.data.role || "student",
+            role: "student",
         });
 
         if (profileError) {
@@ -78,7 +80,7 @@ export async function signup(formData: FormData) {
 
 
     revalidatePath("/", "layout");
-    redirect("/");
+    redirect("/?welcome=signup");
 }
 
 export async function logout() {
@@ -114,6 +116,11 @@ export async function resetPassword(formData: FormData) {
 
     if (password !== confirmPassword) {
         return { error: "Passwords do not match" };
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+        return { error: "Password must be at least 8 characters with one uppercase, one lowercase, and one number" };
     }
 
     const { error } = await supabase.auth.updateUser({

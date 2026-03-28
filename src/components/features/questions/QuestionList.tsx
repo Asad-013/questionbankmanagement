@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { QuestionCard } from "./QuestionCard";
+import { QuestionListItem } from "./QuestionListItem";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Download, CheckSquare, Square, X, Loader2 } from "lucide-react";
+import { Download, CheckSquare, X, Loader2, LayoutGrid, List } from "lucide-react";
 import JSZip from "jszip";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBookmarks } from "@/hooks/useBookmarks";
+import { cn } from "@/lib/utils";
 
 interface QuestionListProps {
     questions: any[];
@@ -16,6 +19,8 @@ interface QuestionListProps {
 export function QuestionList({ questions }: QuestionListProps) {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const { isBookmarked, toggleBookmark } = useBookmarks();
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev =>
@@ -101,32 +106,77 @@ export function QuestionList({ questions }: QuestionListProps) {
                         </Button>
                     )}
                 </div>
+
+                {/* View mode toggle */}
+                <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                            "h-8 w-8 rounded-md",
+                            viewMode === "grid" && "bg-background shadow-sm"
+                        )}
+                        onClick={() => setViewMode("grid")}
+                        title="Grid view"
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                            "h-8 w-8 rounded-md",
+                            viewMode === "list" && "bg-background shadow-sm"
+                        )}
+                        onClick={() => setViewMode("list")}
+                        title="List view"
+                    >
+                        <List className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
-                {questions.map((q) => (
-                    <div key={q.id} className="relative group">
-                        <div
-                            className={`absolute top-4 left-4 z-20 transition-opacity duration-200 ${selectedIds.includes(q.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleSelect(q.id);
-                            }}
-                        >
-                            <Checkbox
-                                checked={selectedIds.includes(q.id)}
-                                onCheckedChange={() => toggleSelect(q.id)}
-                                className="h-5 w-5 bg-white/90 dark:bg-black/90 border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground shadow-lg"
+            {viewMode === "grid" ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
+                    {questions.map((q) => (
+                        <div key={q.id} className="relative group">
+                            <div
+                                className={`absolute top-4 left-4 z-20 transition-opacity duration-200 ${selectedIds.includes(q.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSelect(q.id);
+                                }}
+                            >
+                                <Checkbox
+                                    checked={selectedIds.includes(q.id)}
+                                    onCheckedChange={() => toggleSelect(q.id)}
+                                    className="h-5 w-5 bg-white/90 dark:bg-black/90 border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground shadow-lg"
+                                />
+                            </div>
+                            <QuestionCard
+                                question={q}
+                                isSelected={selectedIds.includes(q.id)}
+                                onSelect={() => toggleSelect(q.id)}
+                                isBookmarked={isBookmarked(q.id)}
+                                onToggleBookmark={() => toggleBookmark(q.id)}
                             />
                         </div>
-                        <QuestionCard
+                    ))}
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {questions.map((q) => (
+                        <QuestionListItem
+                            key={q.id}
                             question={q}
                             isSelected={selectedIds.includes(q.id)}
                             onSelect={() => toggleSelect(q.id)}
+                            isBookmarked={isBookmarked(q.id)}
+                            onToggleBookmark={() => toggleBookmark(q.id)}
                         />
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             <AnimatePresence>
                 {selectedIds.length > 0 && (

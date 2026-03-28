@@ -3,10 +3,34 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+async function requireAuth() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+    return { supabase, user };
+}
+
+async function requireAdmin() {
+    const { supabase, user } = await requireAuth();
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
+    return { supabase, user };
+}
+
+async function requireAdminOrModerator() {
+    const { supabase, user } = await requireAuth();
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    if (profile?.role !== "admin" && profile?.role !== "moderator") {
+        throw new Error("Unauthorized: Admins or moderators only");
+    }
+    return { supabase, user };
+}
+
 /**
  * Fetch dashboard statistics
  */
 export async function getAdminStats() {
+    await requireAdminOrModerator();
     const supabase = await createClient();
 
     const [
@@ -141,6 +165,7 @@ export async function addModeratorByEmail(email: string) {
  * Fetch all content (for inventory)
  */
 export async function getAllContent() {
+    await requireAdminOrModerator();
     const supabase = await createClient();
     const { data, error } = await supabase
         .from("questions")

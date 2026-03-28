@@ -94,7 +94,6 @@
   /* Premium Dark Theme - Deep Blue/Slate bases */
   --background: oklch(0.12 0.01 265);
   /* Deep midnight blue */
-  --foreground: oklch(0.98 0 0);
   --foreground: oklch(0.985 0 0);
 
   --card: oklch(0.14 0.01 265);
@@ -144,5 +143,14 @@
 @layer components {
   .container {
     @apply mx-auto px-4 md:px-6 lg:px-8;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

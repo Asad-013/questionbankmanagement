@@ -5,10 +5,8 @@ import { updateProfile } from "@/lib/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, User, Phone, ImagePlus, FileText, Save } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 type ProfileFormProps = {
     initialData: {
@@ -23,6 +21,7 @@ type ProfileFormProps = {
 
 export function ProfileForm({ initialData }: ProfileFormProps) {
     const [loading, setLoading] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState(initialData.avatar_url || "");
 
     async function handlestart(formData: FormData) {
         setLoading(true);
@@ -42,100 +41,117 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
 
     return (
         <form action={handlestart} className="space-y-6">
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="email" className="text-muted-foreground">Email Address</Label>
-                    <div className="flex gap-2 items-center">
-                        <Input
-                            id="email"
-                            type="email"
-                            disabled
-                            value={initialData.email}
-                            className="bg-muted/50 max-w-sm"
-                        />
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Your email address cannot be changed from this screen.
-                    </p>
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="role" className="text-muted-foreground">Account Role</Label>
-                    <div>
-                        <Badge
-                            variant={initialData.role === 'admin' ? "default" : "secondary"}
-                            className={cn(
-                                "uppercase text-xs tracking-wider font-bold py-1 px-3 mt-1",
-                                initialData.role === 'admin' ? "bg-primary shadow-sm" : "bg-muted text-foreground border shadow-sm"
-                            )}
-                        >
-                            {initialData.role}
-                        </Badge>
-                    </div>
-                </div>
-
-                <div className="space-y-2 pt-4">
-                    <Label htmlFor="full_name" className="font-semibold">Full Name</Label>
+            <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="full_name" className="text-sm font-medium flex items-center gap-2">
+                        <User className="h-3.5 w-3.5 text-muted-foreground" />
+                        Full Name
+                    </Label>
                     <Input
                         id="full_name"
                         name="full_name"
                         type="text"
                         placeholder="John Doe"
                         defaultValue={initialData.full_name}
-                        className="max-w-sm focus-visible:ring-primary"
+                        className="h-11 rounded-xl"
                     />
                 </div>
 
-                <div className="space-y-2 pt-4">
-                    <Label htmlFor="phone_number" className="font-semibold">Phone Number</Label>
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Email Address</Label>
+                    <Input
+                        type="email"
+                        disabled
+                        value={initialData.email}
+                        className="h-11 rounded-xl bg-muted/40 text-muted-foreground"
+                    />
+                    <p className="text-[11px] text-muted-foreground/70">
+                        Email cannot be changed.
+                    </p>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="phone_number" className="text-sm font-medium flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                        Phone Number
+                    </Label>
                     <Input
                         id="phone_number"
                         name="phone_number"
                         type="tel"
                         placeholder="+8801XXXXXXXXX"
                         defaultValue={initialData.phone_number}
-                        className="max-w-sm focus-visible:ring-primary"
+                        className="h-11 rounded-xl"
                     />
                 </div>
 
-                <div className="space-y-2 pt-4">
-                    <Label htmlFor="avatar_url" className="font-semibold">Avatar Image URL</Label>
-                    <Input
-                        id="avatar_url"
-                        name="avatar_url"
-                        type="url"
-                        placeholder="https://example.com/avatar.png"
-                        defaultValue={initialData.avatar_url}
-                        className="max-w-sm focus-visible:ring-primary"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Provide a direct link to an image (JPEG, PNG, GIF).
-                    </p>
+                <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="avatar_url" className="text-sm font-medium flex items-center gap-2">
+                        <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />
+                        Avatar URL
+                    </Label>
+                    <div className="flex gap-3 items-start">
+                        <div className="flex-1">
+                            <Input
+                                id="avatar_url"
+                                name="avatar_url"
+                                type="url"
+                                placeholder="https://example.com/avatar.png"
+                                defaultValue={initialData.avatar_url}
+                                className="h-11 rounded-xl"
+                                onChange={(e) => setAvatarPreview(e.target.value)}
+                            />
+                            <p className="text-[11px] text-muted-foreground/70 mt-1.5">
+                                Direct link to a JPEG, PNG, or GIF image.
+                            </p>
+                        </div>
+                        {avatarPreview ? (
+                            <img
+                                src={avatarPreview}
+                                alt="Avatar preview"
+                                className="h-11 w-11 rounded-xl object-cover border shrink-0"
+                                onError={() => setAvatarPreview("")}
+                            />
+                        ) : (
+                            <div className="h-11 w-11 rounded-xl border bg-muted/30 flex items-center justify-center shrink-0">
+                                <User className="h-5 w-5 text-muted-foreground/40" />
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="space-y-2 pt-4">
-                    <Label htmlFor="bio" className="font-semibold">Biography</Label>
+                <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="bio" className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                        Bio
+                    </Label>
                     <textarea
                         id="bio"
                         name="bio"
                         placeholder="Tell us a little about yourself..."
                         defaultValue={initialData.bio}
                         rows={4}
-                        className="flex w-full max-w-lg rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex w-full rounded-xl border border-input bg-transparent px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                     />
                 </div>
             </div>
 
-            <div className="pt-4 border-t mt-8">
-                <Button type="submit" disabled={loading} className="w-full sm:w-auto min-w-[140px]">
+            <div className="flex justify-end pt-2">
+                <Button
+                    type="submit"
+                    disabled={loading}
+                    className="rounded-xl h-11 px-6 font-medium"
+                >
                     {loading ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Saving...
                         </>
                     ) : (
-                        "Save Changes"
+                        <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Changes
+                        </>
                     )}
                 </Button>
             </div>

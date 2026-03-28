@@ -5,11 +5,30 @@ import { revalidatePath } from "next/cache";
 
 export type TaxonomyType = "exam_names" | "courses" | "departments" | "academic_years";
 
+async function requireAdmin() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+    if (!profile || profile.role !== "admin") {
+        throw new Error("Unauthorized: Admins only");
+    }
+
+    return { supabase, user };
+}
+
 export async function createTaxonomyItem(
     type: TaxonomyType,
     data: Record<string, any>
 ) {
-    const supabase = await createClient();
+    const { supabase } = await requireAdmin();
+
     const { error } = await supabase.from(type).insert(data);
 
     if (error) {
@@ -26,7 +45,8 @@ export async function updateTaxonomyItem(
     id: string,
     data: Record<string, any>
 ) {
-    const supabase = await createClient();
+    const { supabase } = await requireAdmin();
+
     const { error } = await supabase.from(type).update(data).eq("id", id);
 
     if (error) {
@@ -39,7 +59,8 @@ export async function updateTaxonomyItem(
 }
 
 export async function deleteTaxonomyItem(type: TaxonomyType, id: string) {
-    const supabase = await createClient();
+    const { supabase } = await requireAdmin();
+
     const { error } = await supabase.from(type).delete().eq("id", id);
 
     if (error) {

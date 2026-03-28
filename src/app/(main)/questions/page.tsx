@@ -3,14 +3,20 @@ import { getTaxonomyItems } from "@/lib/actions/taxonomy";
 import { getQuestions } from "@/lib/actions/questions";
 import { QuestionFilters } from "@/components/features/questions/QuestionFilters";
 import { QuestionList } from "@/components/features/questions/QuestionList";
-import { Loader2, SearchX } from "lucide-react";
+import { QuestionCardSkeleton } from "@/components/features/questions/QuestionCardSkeleton";
+import { SearchX } from "lucide-react";
+import { QuestionRedirect } from "@/components/features/questions/QuestionRedirect";
 
 export default async function QuestionsPage(props: {
     searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
     const searchParams = await props.searchParams;
 
-    // Simulate slight delay for skeleton test if needed, but for now direct
+    // If ?id= is present, redirect to the detail page
+    if (searchParams.id) {
+        return <QuestionRedirect id={searchParams.id} />;
+    }
+
     const [departments, examNames, academicYears, questions] = await Promise.all([
         getTaxonomyItems("departments"),
         getTaxonomyItems("exam_names"),
@@ -48,27 +54,27 @@ export default async function QuestionsPage(props: {
 
                 {/* Main Content */}
                 <div className="flex-1 min-h-[500px]">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
-                        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-primary/50 animate-pulse" />
-                            Showing {questions?.length || 0} Results
-                        </h2>
-                        {/* Optional Sort Dropdown could go here */}
-                    </div>
-
-                    {!questions || questions.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-32 text-center bg-muted/20 rounded-3xl border border-dashed border-border/50">
-                            <div className="bg-muted/50 p-6 rounded-full mb-6 animate-pulse">
-                                <SearchX className="h-10 w-10 text-muted-foreground/50" />
-                            </div>
-                            <h3 className="text-xl font-bold mb-2">No Matching Questions Filtered</h3>
-                            <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
-                                We couldn't find any questions matching your current filters. Try resetting the filters or searching for a different keyword.
-                            </p>
+                    <Suspense fallback={
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <QuestionCardSkeleton key={i} />
+                            ))}
                         </div>
-                    ) : (
-                        <QuestionList questions={questions} />
-                    )}
+                    }>
+                        {!questions || questions.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-32 text-center bg-muted/20 rounded-3xl border border-dashed border-border/50">
+                                <div className="bg-muted/50 p-6 rounded-full mb-6 animate-pulse">
+                                    <SearchX className="h-10 w-10 text-muted-foreground/50" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">No Matching Questions Found</h3>
+                                <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
+                                    We couldn&apos;t find any questions matching your current filters. Try resetting the filters or searching for a different keyword.
+                                </p>
+                            </div>
+                        ) : (
+                            <QuestionList questions={questions} />
+                        )}
+                    </Suspense>
                 </div>
             </div>
         </div>

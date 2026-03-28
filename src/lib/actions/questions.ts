@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { UploadFormData } from "@/lib/validations/upload";
 
+const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 /**
  * Upload a question image to storage (server-side, bypasses storage RLS)
  * and insert the question record.
@@ -43,6 +46,14 @@ export async function uploadQuestion(formData: FormData) {
         return { success: false, error: "No image file provided" };
     }
 
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        return { success: false, error: "Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed." };
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+        return { success: false, error: "File too large. Maximum size is 10MB." };
+    }
+
     // Use admin client if available, otherwise fallback to standard client
     let storageClient;
     try {
@@ -52,7 +63,11 @@ export async function uploadQuestion(formData: FormData) {
         storageClient = supabase;
     }
 
-    const fileExt = file.name.split(".").pop();
+    const fileExt = file.name.split(".").pop()?.toLowerCase();
+    const allowedExts = ["jpg", "jpeg", "png", "webp", "gif"];
+    if (!fileExt || !allowedExts.includes(fileExt)) {
+        return { success: false, error: "Invalid file extension." };
+    }
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
 
     const { error: storageError } = await storageClient.storage
