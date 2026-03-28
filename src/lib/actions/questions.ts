@@ -43,12 +43,19 @@ export async function uploadQuestion(formData: FormData) {
         return { success: false, error: "No image file provided" };
     }
 
-    // Use admin client to upload file (bypasses storage RLS)
-    const adminClient = createAdminClient();
+    // Use admin client if available, otherwise fallback to standard client
+    let storageClient;
+    try {
+        storageClient = createAdminClient();
+    } catch (e) {
+        console.warn("Falling back to standard client for storage. Ensure RLS SQL scripts are run.");
+        storageClient = supabase;
+    }
+
     const fileExt = file.name.split(".").pop();
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
 
-    const { error: storageError } = await adminClient.storage
+    const { error: storageError } = await storageClient.storage
         .from("questions")
         .upload(fileName, file, {
             contentType: file.type,
@@ -57,11 +64,14 @@ export async function uploadQuestion(formData: FormData) {
 
     if (storageError) {
         console.error("Storage upload error:", storageError);
+        if (storageError.message.includes("row-level security")) {
+            return { success: false, error: "Storage permission denied. Please run the provided SQL script in Supabase or add your SUPABASE_SERVICE_ROLE_KEY to .env." };
+        }
         return { success: false, error: `Storage error: ${storageError.message}` };
     }
 
     // Get public URL
-    const { data: { publicUrl } } = adminClient.storage
+    const { data: { publicUrl } } = storageClient.storage
         .from("questions")
         .getPublicUrl(fileName);
 
@@ -82,7 +92,7 @@ export async function uploadQuestion(formData: FormData) {
     if (dbError) {
         console.error("DB insert error:", dbError);
         // Clean up the uploaded file if DB insert fails
-        await adminClient.storage.from("questions").remove([fileName]);
+        await storageClient.storage.from("questions").remove([fileName]);
         return { success: false, error: dbError.message };
     }
 
