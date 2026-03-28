@@ -17,19 +17,18 @@ export const AuroraBackground = ({
         <main>
             <div
                 className={cn(
-                    "relative flex flex-col min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-900  text-slate-950 transition-bg",
+                    "relative flex flex-col min-h-screen items-center justify-center bg-background text-foreground transition-colors duration-200",
                     className
                 )}
                 {...props}
             >
                 <div className="absolute inset-0 overflow-hidden">
                     <div
-                        //   I'm sorry but this is what peak developer performance looks like // trigger warning
                         className={cn(
                             `
             [--white-gradient:repeating-linear-gradient(100deg,var(--color-white)_0%,var(--color-white)_7%,transparent_10%,transparent_12%,var(--color-white)_16%)]
-            [--dark-gradient:repeating-linear-gradient(100deg,var(--color-black)_0%,var(--color-black)_7%,transparent_10%,transparent_12%,var(--color-black)_16%)]
-            [--aurora:repeating-linear-gradient(100deg,var(--color-blue-500)_10%,var(--color-indigo-300)_15%,var(--color-blue-300)_20%,var(--color-violet-200)_25%,var(--color-blue-400)_30%)]
+            [--dark-gradient:repeating-linear-gradient(100deg,oklch(0.13_0.015_265)_0%,oklch(0.13_0.015_265)_7%,transparent_10%,transparent_12%,oklch(0.13_0.015_265)_16%)]
+            [--aurora:repeating-linear-gradient(100deg,var(--color-primary)_10%,oklch(0.65_0.15_280)_15%,oklch(0.6_0.12_250)_20%,oklch(0.7_0.1_290)_25%,oklch(0.62_0.18_265)_30%)]
             [background-image:var(--white-gradient),var(--aurora)]
             dark:[background-image:var(--dark-gradient),var(--aurora)]
             [background-size:300%,_200%]

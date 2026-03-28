@@ -91,36 +91,42 @@
 }
 
 .dark {
-  /* Premium Dark Theme - Deep Blue/Slate bases */
-  --background: oklch(0.12 0.01 265);
-  /* Deep midnight blue */
-  --foreground: oklch(0.985 0 0);
+  /* Premium Dark Theme - Deep Blue/Slate bases with enhanced contrast */
+  --background: oklch(0.13 0.015 265);
+  /* Deep midnight blue with subtle warmth */
+  --foreground: oklch(0.93 0.01 265);
+  /* Softer white with blue tint for better eye comfort */
 
-  --card: oklch(0.14 0.01 265);
-  --card-foreground: oklch(0.985 0 0);
+  --card: oklch(0.16 0.018 265);
+  /* Slightly elevated card surface */
+  --card-foreground: oklch(0.93 0.01 265);
 
-  --popover: oklch(0.14 0.01 265);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.16 0.018 265);
+  --popover-foreground: oklch(0.93 0.01 265);
 
-  --primary: oklch(0.55 0.15 265);
-  /* Slightly lighter royal blue for dark mode */
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.62 0.18 265);
+  /* Brighter royal blue for better visibility */
+  --primary-foreground: oklch(0.98 0 0);
 
-  --secondary: oklch(0.2 0.02 265);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.22 0.025 265);
+  /* More visible secondary surface */
+  --secondary-foreground: oklch(0.9 0.01 265);
 
-  --muted: oklch(0.2 0.02 265);
-  --muted-foreground: oklch(0.7 0 0);
+  --muted: oklch(0.22 0.025 265);
+  --muted-foreground: oklch(0.65 0.02 265);
+  /* Improved readability for muted text */
 
-  --accent: oklch(0.2 0.02 265);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.22 0.025 265);
+  --accent-foreground: oklch(0.93 0.01 265);
 
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.55 0.2 27);
+  /* Brighter destructive for better visibility */
+  --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.2 0.02 265);
-  --input: oklch(0.2 0.02 265);
-  --ring: oklch(0.55 0.15 265);
+  --border: oklch(0.24 0.025 265);
+  /* More visible borders */
+  --input: oklch(0.24 0.025 265);
+  --ring: oklch(0.62 0.18 265);
 }
 
 @layer base {
@@ -138,6 +144,37 @@
     margin: 0;
     padding: 0;
   }
+
+  /* Smooth theme transitions */
+  html {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Dark mode specific scrollbar styling */
+  .dark::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .dark::-webkit-scrollbar-track {
+    background: oklch(0.18 0.015 265);
+    border-radius: 4px;
+  }
+
+  .dark::-webkit-scrollbar-thumb {
+    background: oklch(0.35 0.03 265);
+    border-radius: 4px;
+  }
+
+  .dark::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.45 0.04 265);
+  }
+
+  /* Selection color for dark mode */
+  .dark ::selection {
+    background: oklch(0.62 0.18 265 / 0.3);
+    color: oklch(0.93 0.01 265);
+  }
 }
 
 @layer components {
@@ -152,5 +189,29 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Dark mode card hover effect */
+  .dark .card-hover {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .dark .card-hover:hover {
+    box-shadow: 0 4px 24px -4px oklch(0 0 0 / 0.4), 0 0 0 1px oklch(0.24 0.025 265);
+  }
+
+  /* Dark mode glow effects */
+  .dark .glow-primary {
+    box-shadow: 0 0 20px -5px oklch(0.62 0.18 265 / 0.3);
+  }
+
+  .dark .glow-primary:hover {
+    box-shadow: 0 0 30px -5px oklch(0.62 0.18 265 / 0.4);
+  }
+
+  /* Focus visible improvements for dark mode */
+  .dark *:focus-visible {
+    outline: 2px solid oklch(0.62 0.18 265);
+    outline-offset: 2px;
   }
 }
