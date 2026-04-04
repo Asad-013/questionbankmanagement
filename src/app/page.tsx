@@ -10,6 +10,7 @@ import { Footer7 } from "@/components/ui/footer-7";
 import { WelcomeBanner } from "@/components/shared/WelcomeBanner";
 import { HeroContent } from "@/components/shared/HeroContent";
 import { UserDependentText } from "@/components/shared/UserDependentContent";
+import { FeedbackCTA } from "@/components/shared/FeedbackCTA";
 
 export default async function Home() {
     const questions = await getQuestions();
@@ -173,6 +174,8 @@ export default async function Home() {
                         <UserDependentText />
                     </div>
                 </section>
+
+                <FeedbackCTA />
             </main>
 
             <Footer7 />

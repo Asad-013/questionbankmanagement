@@ -60,13 +60,16 @@ export function Navbar() {
         { href: "/upload", label: "Contribute", icon: <PlusCircle className="w-4 h-4 mr-1" /> },
     ];
 
+    // Admin/Moderator dashboard is now shown as a prominent button in the action bar (right side)
+    /*
     if (isAdmin) {
         navLinks.push({
             href: isModerator ? "/moderator" : "/admin",
-            label: isModerator ? "Moderator" : "Admin",
-            icon: <Shield className="w-4 h-4 mr-1" />
+            label: isModerator ? "Moderator Panel" : "Admin Panel",
+            icon: <Shield className="h-4 w-4 mr-1" />
         });
     }
+    */
 
     const handleSignOut = async () => {
         const supabase = createClient();
@@ -111,7 +114,7 @@ export function Navbar() {
                 </nav>
 
                 <div className="flex items-center gap-2">
-                    <ThemeToggleIcon className="hidden sm:flex" />
+                    <ThemeToggleIcon className="flex" />
 
                     {user ? (
                         <>
@@ -143,6 +146,15 @@ export function Navbar() {
                                     </span>
                                 </Button>
                             </Link>
+
+                            {(isAdmin || isModerator) && (
+                                <Link href={isModerator ? "/moderator" : "/admin"} className="hidden md:block">
+                                    <Button variant="outline" size="sm" className="h-9 rounded-lg border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary-foreground transition-all">
+                                        <Shield className="mr-2 h-3.5 w-3.5" />
+                                        {isModerator ? "Moderator Panel" : "Admin Panel"}
+                                    </Button>
+                                </Link>
+                            )}
 
                             <Button variant="ghost" size="sm" onClick={handleSignOut} className="hidden md:flex">
                                 Sign Out
@@ -193,17 +205,28 @@ export function Navbar() {
                                 {link.label}
                             </Link>
                         ))}
-                        <div className="pt-3 border-t mt-3 flex items-center justify-between px-4">
+                        <div className="pt-3 border-t mt-3 flex items-center justify-between px-4 pb-2">
                             <span className="text-sm text-muted-foreground">Theme</span>
                             <ThemeToggleIcon />
                         </div>
                         {user && (
-                            <button
-                                onClick={handleSignOut}
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/5 transition-all w-full"
-                            >
-                                Sign Out
-                            </button>
+                            <>
+                                {(isAdmin || isModerator) && (
+                                    <Link
+                                        href={isModerator ? "/moderator" : "/admin"}
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-primary hover:bg-primary/5 transition-all w-full"
+                                    >
+                                        <Shield className="h-4 w-4" />
+                                        {isModerator ? "Moderator Panel" : "Admin Panel"}
+                                    </Link>
+                                )}
+                                <button
+                                    onClick={handleSignOut}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/5 transition-all w-full"
+                                >
+                                    Sign Out
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { ThemeToggleIcon } from "@/components/shared/ThemeToggle";
 
 export default function AuthLayout({
     children,
@@ -9,7 +9,7 @@ export default function AuthLayout({
     return (
         <div className="flex min-h-screen">
             {/* Left Side - Visual Panel */}
-            <div className="hidden lg:flex w-[480px] xl:w-[520px] flex-col justify-between relative overflow-hidden bg-primary">
+            <div className="hidden lg:flex w-[480px] xl:w-[520px] flex-col justify-between relative overflow-hidden bg-primary shrink-0">
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/80" />
                 <div className="absolute inset-0 opacity-10">
@@ -87,8 +87,8 @@ export default function AuthLayout({
                         </div>
                         <span className="font-bold text-lg tracking-tight">ILET</span>
                     </Link>
-                    <div className="hidden lg:block" />
-                    <ThemeToggle />
+                    <div className="hidden lg:block md:w-1" />
+                    <ThemeToggleIcon />
                 </div>
 
                 {/* Form content */}

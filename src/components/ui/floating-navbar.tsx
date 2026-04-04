@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { ThemeToggleIcon } from "@/components/shared/ThemeToggle";
 
 export const FloatingNav = ({
     navItems,
@@ -24,6 +25,8 @@ export const FloatingNav = ({
 
     const [visible, setVisible] = useState(true);
     const [user, setUser] = React.useState<any>(null);
+    const [isAdmin, setIsAdmin] = React.useState(false);
+    const [isModerator, setIsModerator] = React.useState(false);
 
     React.useEffect(() => {
         const checkAuth = async () => {
@@ -31,6 +34,20 @@ export const FloatingNav = ({
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
+
+            if (user) {
+                const { data: profile } = await supabase
+                    .from("users")
+                    .select("role")
+                    .eq("id", user.id)
+                    .single();
+
+                if (profile?.role === "admin") {
+                    setIsAdmin(true);
+                } else if (profile?.role === "moderator") {
+                    setIsModerator(true);
+                }
+            }
         };
         checkAuth();
     }, []);
@@ -71,24 +88,37 @@ export const FloatingNav = ({
                     </Link>
                 ))}
 
-                {user ? (
+                {(isAdmin || isModerator) && (
                     <Link
-                        href="/questions"
-                        className="border text-sm font-bold relative border-primary/20 bg-primary/10 text-primary px-5 py-2 rounded-full transition-all hover:bg-primary/20"
+                        href={isModerator ? "/moderator" : "/admin"}
+                        className="relative dark:text-neutral-50 items-center flex space-x-1 text-primary hover:text-primary/80 transition-colors"
                     >
-                        <span>Archive</span>
-                        <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-primary to-transparent h-px" />
-                    </Link>
-                ) : (
-                    <Link
-                        href="/login"
-                        className="border text-sm font-bold relative border-neutral-200 dark:border-white/[0.2] text-black dark:text-white px-5 py-2 rounded-full transition-all hover:bg-neutral-100 dark:hover:bg-white/10"
-                    >
-                        <span>Login</span>
-                        <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-blue-500 to-transparent h-px" />
+                        <span className="hidden sm:block text-sm font-bold">Admin</span>
                     </Link>
                 )}
+
+                <div className="flex items-center gap-2 pr-2">
+                    <ThemeToggleIcon className="h-8 w-8 !border-none !bg-transparent !shadow-none" />
+                    {user ? (
+                        <Link
+                            href="/questions"
+                            className="border text-sm font-bold relative border-primary/20 bg-primary/10 text-primary px-5 py-2 rounded-full transition-all hover:bg-primary/20"
+                        >
+                            <span>Archive</span>
+                            <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-primary to-transparent h-px" />
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="border text-sm font-bold relative border-neutral-200 dark:border-white/[0.2] text-black dark:text-white px-5 py-2 rounded-full transition-all hover:bg-neutral-100 dark:hover:bg-white/10"
+                        >
+                            <span>Login</span>
+                            <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-blue-500 to-transparent h-px" />
+                        </Link>
+                    )}
+                </div>
             </motion.div>
         </AnimatePresence>
     );
 };
+
