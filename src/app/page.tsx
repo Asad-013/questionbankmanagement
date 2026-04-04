@@ -7,6 +7,7 @@ import { Search, ShieldCheck, ArrowRight, LayoutGrid, Sparkles, Home as HomeIcon
 import { FloatingNav } from "@/components/ui/floating-navbar";
 import { AuroraBackground } from "@/components/ui/aurora-background";
 import { Footer7 } from "@/components/ui/footer-7";
+import { QuestionsPreview } from "@/components/features/questions/QuestionsPreview";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -249,6 +250,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Questions Preview */}
+        <QuestionsPreview />
 
         {/* CTA */}
         <section className="py-16 md:py-24 relative overflow-hidden">

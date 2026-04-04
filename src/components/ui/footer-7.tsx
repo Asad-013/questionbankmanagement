@@ -31,7 +31,7 @@ export const Footer7 = ({
         title: "ILET Archive",
     },
     description = "Official decentralized Question Bank for the Institute of Leather Engineering and Technology, University of Dhaka.",
-    copyright = "© 2026 ILET Question Bank. Affiliated with University of Dhaka.",
+    copyright = "© 2026 Institute of Leather Engineering and Technology, University of Dhaka.",
     legalLinks = defaultLegalLinks,
 }: Footer7Props) => {
     return (
