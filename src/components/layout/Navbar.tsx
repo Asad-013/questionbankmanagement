@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Search, PlusCircle, Menu, Shield, Bell, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { ThemeToggleIcon } from "@/components/shared/ThemeToggle";
 
 export function Navbar() {
     const pathname = usePathname();
@@ -111,7 +111,7 @@ export function Navbar() {
                 </nav>
 
                 <div className="flex items-center gap-2">
-                    <ThemeToggle className="hidden sm:flex" />
+                    <ThemeToggleIcon className="hidden sm:flex" />
 
                     {user ? (
                         <>
@@ -195,7 +195,7 @@ export function Navbar() {
                         ))}
                         <div className="pt-3 border-t mt-3 flex items-center justify-between px-4">
                             <span className="text-sm text-muted-foreground">Theme</span>
-                            <ThemeToggle />
+                            <ThemeToggleIcon />
                         </div>
                         {user && (
                             <button

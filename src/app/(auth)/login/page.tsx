@@ -60,7 +60,7 @@ export default function LoginPage() {
                             id="email"
                             name="email"
                             type="email"
-                            placeholder="student@university.edu"
+                            placeholder="you@example.com"
                             required
                             className="h-11 pl-10 rounded-xl"
                         />
