@@ -1,9 +1,7 @@
 "use server";
 
-import { Resend } from "resend";
+import { getResendClient } from "@/lib/resend";
 import { z } from "zod";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const feedbackSchema = z.object({
     name: z.string().min(1).max(100),
@@ -44,8 +42,9 @@ export async function sendFeedback(formData: {
     subject: string;
     message: string;
 }) {
-    if (!process.env.RESEND_API_KEY) {
-        console.error("RESEND_API_KEY is not set");
+    const resend = getResendClient();
+    if (!resend) {
+        console.error("Resend client could not be initialized (likely missing API key)");
         return { success: false, error: "Email service not configured." };
     }
 
