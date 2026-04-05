@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS public.applications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   full_name VARCHAR(200) NOT NULL,
+  email VARCHAR(200) NOT NULL,
   address TEXT NOT NULL,
   whatsapp VARCHAR(30) NOT NULL,
   university VARCHAR(200) NOT NULL,

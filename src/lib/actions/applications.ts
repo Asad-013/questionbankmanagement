@@ -1,10 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 export async function getApplications() {
-  const supabase = createAdminClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('applications')
@@ -21,7 +21,7 @@ export async function getApplications() {
 
 export async function updateApplicationStatus(id: string, status: 'approved' | 'rejected') {
   try {
-    const supabase = createAdminClient();
+    const supabase = await createClient();
 
     const { error } = await supabase
       .from('applications')

@@ -9,7 +9,8 @@ import {
   ExternalLink, 
   Mail, 
   MapPin, 
-  GraduationCap
+  GraduationCap,
+  Phone
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ type Application = {
   session: string;
   id_card_url: string;
   status: 'pending' | 'approved' | 'rejected';
+  email: string;
   created_at: string;
 };
 
@@ -69,7 +71,8 @@ export function ApplicationsTable({ applications }: { applications: Application[
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Contact</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>WhatsApp</TableHead>
               <TableHead>University</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
@@ -92,17 +95,16 @@ export function ApplicationsTable({ applications }: { applications: Application[
                       {app.department} • {app.session}
                     </div>
                   </TableCell>
+                  <TableCell className="max-w-[200px] truncate">
+                    <a href={`mailto:${app.email}`} className="text-blue-500 hover:underline">
+                      {app.email}
+                    </a>
+                  </TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1 text-sm">
-                      <a href={`https://wa.me/${app.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-500 hover:underline">
-                        <Mail className="h-3 w-3" />
-                        {app.whatsapp}
-                      </a>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        {app.address}
-                      </span>
-                    </div>
+                    <a href={`https://wa.me/${app.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-500 hover:underline">
+                      <Phone className="h-3 w-3" />
+                      {app.whatsapp}
+                    </a>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">

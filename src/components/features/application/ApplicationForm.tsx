@@ -15,6 +15,7 @@ import { submitApplication } from '@/lib/actions/application';
 
 const applicationSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
   address: z.string().min(5, 'Address must be at least 5 characters'),
   whatsapp: z.string().regex(/^\+?[\d\s-]{10,15}$/, 'Enter a valid WhatsApp number (e.g., +8801xxxxxxxxx)'),
   university: z.string().min(2, 'University name is required'),
@@ -85,6 +86,7 @@ export function ApplicationForm() {
     startTransition(async () => {
       const formData = new FormData();
       formData.append('fullName', data.fullName);
+      formData.append('email', data.email);
       formData.append('address', data.address);
       formData.append('whatsapp', data.whatsapp);
       formData.append('university', data.university);
@@ -127,6 +129,22 @@ export function ApplicationForm() {
                 <p className="text-xs text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {errors.fullName.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                {...register('email')}
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.email.message}
                 </p>
               )}
             </div>
