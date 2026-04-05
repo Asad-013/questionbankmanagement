@@ -53,7 +53,7 @@ export async function updateApplicationStatus(id: string, status: 'approved' | '
         try {
           const isApproved = status === 'approved';
           await resend.emails.send({
-            from: 'ILET <noreply@ilet.com>',
+            from: 'ILET <onboarding@resend.dev>',
             to: appData.email,
             subject: isApproved 
               ? 'Application Update: You have been approved! - ILET'
