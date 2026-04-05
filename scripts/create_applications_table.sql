@@ -17,14 +17,17 @@ CREATE TABLE IF NOT EXISTS public.applications (
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Public can submit applications
+DROP POLICY IF EXISTS "Anyone can submit application" ON public.applications;
 CREATE POLICY "Anyone can submit application" ON public.applications FOR INSERT TO public WITH CHECK (true);
 
 -- Policy: Only admins can view all applications
+DROP POLICY IF EXISTS "Admins can view all applications" ON public.applications;
 CREATE POLICY "Admins can view all applications" ON public.applications FOR SELECT TO authenticated USING (
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
 );
 
 -- Policy: Only admins can update applications
+DROP POLICY IF EXISTS "Admins can update applications" ON public.applications;
 CREATE POLICY "Admins can update applications" ON public.applications FOR UPDATE TO authenticated USING (
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
 );
@@ -44,6 +47,7 @@ ON CONFLICT (id) DO NOTHING;
 DROP POLICY IF EXISTS "Public can view id-cards" ON storage.objects;
 CREATE POLICY "Public can view id-cards" ON storage.objects FOR SELECT TO public USING (bucket_id = 'id-cards');
 
--- Storage policy: Authenticated users can upload ID cards
+-- Storage policy: Anyone can upload ID cards (for public application form)
 DROP POLICY IF EXISTS "Authenticated can upload id-cards" ON storage.objects;
-CREATE POLICY "Authenticated can upload id-cards" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'id-cards');
+DROP POLICY IF EXISTS "Public can upload id-cards" ON storage.objects;
+CREATE POLICY "Public can upload id-cards" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'id-cards');

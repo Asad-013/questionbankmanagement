@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Upload, CheckCircle, AlertCircle, Phone, MapPin, GraduationCap, Building2, Calendar } from 'lucide-react';
+import { Loader2, Upload, CheckCircle, AlertCircle, Phone, MapPin, GraduationCap, Building2, Calendar, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +27,7 @@ type ApplicationFormData = z.infer<typeof applicationSchema>;
 export function ApplicationForm() {
   const [isPending, startTransition] = useTransition();
   const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string>('');
   const router = useRouter();
 
@@ -59,6 +60,20 @@ export function ApplicationForm() {
     }
 
     setFile(selectedFile);
+    setFilePreview(null);
+
+    if (selectedFile.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => setFilePreview(e.target?.result as string);
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  const clearFile = () => {
+    setFile(null);
+    setFilePreview(null);
+    const input = document.getElementById('idCard') as HTMLInputElement;
+    if (input) input.value = '';
   };
 
   const onSubmit = async (data: ApplicationFormData) => {
@@ -80,10 +95,7 @@ export function ApplicationForm() {
       const result = await submitApplication(formData);
 
       if (result.success) {
-        toast.success('Application submitted successfully!');
-        reset();
-        setFile(null);
-        router.refresh();
+        router.push('/apply/success');
       } else {
         toast.error(result.error || 'Failed to submit application');
       }
@@ -219,31 +231,58 @@ export function ApplicationForm() {
 
           <div className="space-y-2">
             <Label htmlFor="idCard">University ID Card *</Label>
-            <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:bg-muted/50 transition-colors">
-              <input
-                id="idCard"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <label htmlFor="idCard" className="cursor-pointer">
-                <div className="flex flex-col items-center gap-2">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  {file ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="font-medium">{file.name}</span>
+            {file ? (
+              <div className="relative border rounded-lg p-4">
+                <div className="flex items-start gap-4">
+                  {filePreview ? (
+                    <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                      <img src={filePreview} alt="ID Preview" className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <>
-                      <p className="text-sm font-medium">Click to upload your ID card</p>
-                      <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, or PDF (max 10MB)</p>
-                    </>
+                    <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                      <FileText className="h-8 w-8 text-muted-foreground" />
+                    </div>
                   )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(file.size / 1024).toFixed(1)} KB
+                    </p>
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      className="text-xs text-destructive hover:underline mt-2 flex items-center gap-1"
+                    >
+                      <X className="h-3 w-3" /> Remove
+                    </button>
+                  </div>
                 </div>
-              </label>
-            </div>
+                <input
+                  id="idCard"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:bg-muted/50 transition-colors">
+                <input
+                  id="idCard"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <label htmlFor="idCard" className="cursor-pointer">
+                  <div className="flex flex-col items-center gap-2">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm font-medium">Click to upload your ID card</p>
+                    <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, or PDF (max 10MB)</p>
+                  </div>
+                </label>
+              </div>
+            )}
             {fileError && (
               <p className="text-xs text-destructive flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
