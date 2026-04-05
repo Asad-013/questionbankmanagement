@@ -13,6 +13,7 @@ const navItems: NavItem[] = [
     { href: "/admin", label: "Admin Overview", icon: LayoutDashboard },
     { href: "/admin/content", label: "Question Archive", icon: FileText },
     { href: "/admin/moderation", label: "Pending Reviews", icon: CheckSquare },
+    { href: "/admin/applications", label: "Applications", icon: Users, adminOnly: true },
     { href: "/admin/users", label: "Member Directory", icon: Users, adminOnly: true },
     { href: "/admin/audit", label: "Audit Logs", icon: Activity, adminOnly: true },
     { href: "/admin/settings/taxonomy", label: "Academic Setup", icon: Settings, adminOnly: true },

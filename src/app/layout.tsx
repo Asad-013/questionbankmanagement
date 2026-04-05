@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { Analytics } from "@vercel/analytics/next";
+import { InstallPrompt } from "@/components/shared/InstallPrompt";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,6 +16,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ILET - University Exam Question Repository",
   description: "A fast, scalable platform for university exam questions.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ILET",
+  },
   openGraph: {
     title: "ILET - University Exam Question Repository",
     description: "Access hundreds of past exam papers from the Institute of Leather Engineering and Technology, University of Dhaka.",
@@ -43,6 +50,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           {children}
+          <InstallPrompt />
           <Toaster />
           <Analytics />
         </ThemeProvider>

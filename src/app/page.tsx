@@ -19,7 +19,8 @@ export default async function Home() {
     const navItems = [
         { name: "Home", link: "/", icon: <HomeIcon className="h-4 w-4" /> },
         { name: "Questions", link: "/questions", icon: <Search className="h-4 w-4" /> },
-        { name: "Upload", link: "/upload", icon: <UploadCloud className="h-4 w-4" /> }
+        { name: "Upload", link: "/upload", icon: <UploadCloud className="h-4 w-4" /> },
+        { name: "Join Team", link: "/apply", icon: <Users className="h-4 w-4" /> }
     ];
 
     return (
