@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.feedback (
   type VARCHAR(50) NOT NULL CHECK (type IN ('bug', 'improvement', 'other')),
   subject VARCHAR(200) NOT NULL,
   message TEXT NOT NULL,
+  image_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -28,3 +29,17 @@ DROP TRIGGER IF EXISTS update_feedback_updated_at ON public.feedback;
 CREATE TRIGGER update_feedback_updated_at 
 BEFORE UPDATE ON public.feedback 
 FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+-- Create storage bucket for feedback screenshots
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('feedback', 'feedback', true, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policy: Public can view feedback screenshots
+DROP POLICY IF EXISTS "Public can view feedback screenshots" ON storage.objects;
+CREATE POLICY "Public can view feedback screenshots" ON storage.objects FOR SELECT TO public USING (bucket_id = 'feedback');
+
+-- Storage policy: Anyone can upload feedback screenshots
+DROP POLICY IF EXISTS "Public can upload feedback screenshots" ON storage.objects;
+CREATE POLICY "Public can upload feedback screenshots" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'feedback');
+

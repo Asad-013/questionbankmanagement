@@ -10,6 +10,7 @@ const feedbackSchema = z.object({
     type: z.enum(["bug", "improvement", "other"]),
     subject: z.string().min(1).max(200),
     message: z.string().min(1).max(5000),
+    image: z.string().optional(),
 });
 
 function escapeHtml(str: string): string {
@@ -42,6 +43,7 @@ export async function sendFeedback(formData: {
     type: "bug" | "improvement" | "other";
     subject: string;
     message: string;
+    image?: string;
 }) {
     const parsed = feedbackSchema.safeParse(formData);
     if (!parsed.success) {
@@ -52,7 +54,40 @@ export async function sendFeedback(formData: {
         return { success: false, error: "Too many feedback submissions. Please try again later." };
     }
 
-    // 1. Store feedback in the Supabase database
+    let imageUrl: string | null = null;
+
+    // 1. If an image attachment is provided (base64), upload it to Supabase Storage
+    if (formData.image && formData.image.startsWith("data:image/")) {
+        try {
+            const mimeType = formData.image.match(/data:([^;]+);/)?.[1] || "image/png";
+            const base64Data = formData.image.replace(/^data:image\/\w+;base64,/, "");
+            const buffer = Buffer.from(base64Data, "base64");
+            
+            const ext = mimeType.split("/")[1] || "png";
+            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${ext}`;
+            
+            const supabaseAdmin = createAdminClient();
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from("feedback")
+                .upload(fileName, buffer, {
+                    contentType: mimeType,
+                    upsert: false
+                });
+                
+            if (uploadError) {
+                console.error("Failed to upload feedback attachment:", uploadError);
+            } else {
+                const { data: { publicUrl } } = supabaseAdmin.storage
+                    .from("feedback")
+                    .getPublicUrl(fileName);
+                imageUrl = publicUrl;
+            }
+        } catch (uploadErr) {
+            console.error("Error processing feedback image attachment:", uploadErr);
+        }
+    }
+
+    // 2. Store feedback in the Supabase database
     try {
         const supabase = createAdminClient();
         const { error: dbError } = await supabase
@@ -63,6 +98,7 @@ export async function sendFeedback(formData: {
                 type: formData.type,
                 subject: formData.subject,
                 message: formData.message,
+                image_url: imageUrl,
             });
 
         if (dbError) {
@@ -74,7 +110,7 @@ export async function sendFeedback(formData: {
         return { success: false, error: "Database service unavailable." };
     }
 
-    // 2. Try sending email notification via Resend (optional, non-blocking for user success)
+    // 3. Try sending email notification via Resend (optional, non-blocking for user success)
     const resend = getResendClient();
     if (!resend) {
         console.warn("Resend client could not be initialized. Feedback stored in database, skipping email.");
@@ -82,6 +118,11 @@ export async function sendFeedback(formData: {
     }
 
     try {
+        const attachmentHtml = imageUrl 
+            ? `<p><strong>Attachment:</strong> <a href="${imageUrl}" target="_blank">View Image</a></p>
+               <div style="margin-top: 10px;"><img src="${imageUrl}" alt="Attachment" style="max-width: 100%; max-height: 300px; border-radius: 6px; border: 1px solid #ddd;" /></div>`
+            : "";
+
         const { error: emailError } = await resend.emails.send({
             from: "ILET Archive Feedback <onboarding@resend.dev>",
             to: ["badhona931@gmail.com"],
@@ -93,6 +134,7 @@ export async function sendFeedback(formData: {
                     <p><strong>From:</strong> ${escapeHtml(formData.name)} (${escapeHtml(formData.email)})</p>
                     <p><strong>Type:</strong> ${escapeHtml(formData.type)}</p>
                     <p><strong>Subject:</strong> ${escapeHtml(formData.subject)}</p>
+                    ${attachmentHtml}
                     <hr style="border: 0; border-top: 1px solid #eee;" />
                     <p style="white-space: pre-wrap;">${escapeHtml(formData.message)}</p>
                     <hr style="border: 0; border-top: 1px solid #eee;" />

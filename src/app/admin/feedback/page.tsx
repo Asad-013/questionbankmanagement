@@ -18,6 +18,7 @@ interface FeedbackItem {
     type: "bug" | "improvement" | "other";
     subject: string;
     message: string;
+    image_url?: string;
     created_at: string;
 }
 
@@ -269,10 +270,28 @@ export default function AdminFeedbackPage() {
 
                         <div>
                             <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Message</p>
-                            <div className="bg-muted p-4 rounded-xl text-sm leading-relaxed text-foreground whitespace-pre-wrap max-h-60 overflow-y-auto border border-border/50">
+                            <div className="bg-muted p-4 rounded-xl text-sm leading-relaxed text-foreground whitespace-pre-wrap max-h-40 overflow-y-auto border border-border/50">
                                 {selectedFeedback.message}
                             </div>
                         </div>
+
+                        {selectedFeedback.image_url && (
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Attachment</p>
+                                <a 
+                                    href={selectedFeedback.image_url} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="block relative aspect-video w-full overflow-hidden rounded-xl border bg-muted/30 hover:opacity-90 transition-opacity"
+                                >
+                                    <img 
+                                        src={selectedFeedback.image_url} 
+                                        alt="Attachment" 
+                                        className="w-full h-full object-contain"
+                                    />
+                                </a>
+                            </div>
+                        )}
 
                         <div className="flex justify-end pt-2">
                             <Button onClick={() => setSelectedFeedback(null)}>Close</Button>
