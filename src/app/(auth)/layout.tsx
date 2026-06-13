@@ -55,22 +55,7 @@ export default function AuthLayout({
                                 Access hundreds of past exam papers from the Institute of Leather Engineering and Technology, University of Dhaka.
                             </p>
                         </div>
-
-                        {!isRegisterPage && (
-                            <div className="grid grid-cols-2 gap-3 pt-2">
-                                {[
-                                    { label: "Papers", value: "500+" },
-                                    { label: "Courses", value: "40+" },
-                                    { label: "Users", value: "2K+" },
-                                    { label: "Years", value: "10+" },
-                                ].map((stat) => (
-                                    <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
-                                        <div className="text-xl font-bold text-white">{stat.value}</div>
-                                        <div className="text-[11px] text-white/50 uppercase tracking-wider">{stat.label}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        
                     </div>
                 </div>
 
