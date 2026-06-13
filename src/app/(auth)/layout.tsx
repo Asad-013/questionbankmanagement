@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { ThemeToggleIcon } from "@/components/shared/ThemeToggle";
+import { usePathname } from "next/navigation";
 
 export default function AuthLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const pathname = usePathname();
+    const isRegisterPage = pathname === "/register";
+
     return (
         <div className="flex min-h-screen">
             {/* Left Side - Visual Panel */}
@@ -50,19 +56,21 @@ export default function AuthLayout({
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 pt-2">
-                            {[
-                                { label: "Papers", value: "500+" },
-                                { label: "Courses", value: "40+" },
-                                { label: "Users", value: "2K+" },
-                                { label: "Years", value: "10+" },
-                            ].map((stat) => (
-                                <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
-                                    <div className="text-xl font-bold text-white">{stat.value}</div>
-                                    <div className="text-[11px] text-white/50 uppercase tracking-wider">{stat.label}</div>
-                                </div>
-                            ))}
-                        </div>
+                        {!isRegisterPage && (
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                {[
+                                    { label: "Papers", value: "500+" },
+                                    { label: "Courses", value: "40+" },
+                                    { label: "Users", value: "2K+" },
+                                    { label: "Years", value: "10+" },
+                                ].map((stat) => (
+                                    <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                                        <div className="text-xl font-bold text-white">{stat.value}</div>
+                                        <div className="text-[11px] text-white/50 uppercase tracking-wider">{stat.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -31,7 +31,7 @@ export function QuestionsGallery({ questions }: QuestionsGalleryProps) {
     const moreQuestions = questions.slice(7, 13);
 
     return (
-        <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/20">
+        <section id="question-bank" className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/20">
             <div className="container mx-auto px-4 md:px-6">
                 <div className="text-center mb-12">
                     <span className="text-primary font-bold tracking-widest uppercase text-xs">Live Preview</span>
@@ -163,11 +163,6 @@ export function QuestionsGallery({ questions }: QuestionsGalleryProps) {
                     <Link href="/questions">
                         <Button size="lg" className="rounded-full shadow-lg bg-primary hover:bg-primary/90">
                             Browse All Papers <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                    </Link>
-                    <Link href="/register">
-                        <Button variant="outline" size="lg" className="rounded-full">
-                            Sign Up to Download <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Link>
                 </div>

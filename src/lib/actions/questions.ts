@@ -3,15 +3,143 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { UploadFormData } from "@/lib/validations/upload";
+import { UploadFormData, BulkUploadFormData, BulkUploadResult } from "@/lib/validations/upload";
 
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_BULK_FILES = 10;
+const MAX_BULK_SIZE = 50 * 1024 * 1024; // 50MB total for bulk
 
 /**
- * Upload a question image to storage (server-side, bypasses storage RLS)
- * and insert the question record.
+ * Upload multiple question images in a single batch.
  */
+export async function uploadBulkQuestions(
+    files: Array<{ name: string; blob: Blob; type: string }>,
+    metadata: BulkUploadFormData
+): Promise<BulkUploadResult> {
+    const supabase = await createClient();
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (files.length === 0) {
+        return { success: false, error: "No files provided" };
+    }
+
+    if (files.length > MAX_BULK_FILES) {
+        return { success: false, error: `Maximum ${MAX_BULK_FILES} files allowed per batch` };
+    }
+
+    const totalSize = files.reduce((acc, f) => acc + f.blob.size, 0);
+    if (totalSize > MAX_BULK_SIZE) {
+        return { success: false, error: "Total file size exceeds 50MB limit" };
+    }
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("created_by", user.id)
+        .gte("created_at", oneHourAgo);
+
+    const maxAllowed = 5;
+    if (count !== null && count + files.length > maxAllowed) {
+        return { 
+            success: false, 
+            error: `Rate limit exceeded. You can upload ${maxAllowed - (count || 0)} more question(s) this hour.` 
+        };
+    }
+
+    let storageClient;
+    try {
+        storageClient = createAdminClient();
+    } catch (e) {
+        console.warn("Falling back to standard client for storage.");
+        storageClient = supabase;
+    }
+
+    const uploaded: string[] = [];
+    const failed: Array<{ name: string; error: string }> = [];
+
+    for (const file of files) {
+        const allowedExts = ["jpg", "jpeg", "png", "webp", "gif"];
+        const ext = file.type.split("/").pop()?.toLowerCase();
+        
+        if (!ext || !allowedExts.includes(ext)) {
+            failed.push({ name: file.name, error: "Invalid file type" });
+            continue;
+        }
+
+        if (file.blob.size > MAX_FILE_SIZE) {
+            failed.push({ name: file.name, error: "File too large (max 10MB)" });
+            continue;
+        }
+
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            failed.push({ name: file.name, error: "Invalid file type. Only JPEG, PNG, WebP, and GIF allowed." });
+            continue;
+        }
+
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}_${Math.random().toString(36).substring(2)}.${ext}`;
+
+        const { error: storageError } = await storageClient.storage
+            .from("questions")
+            .upload(fileName, file.blob, {
+                contentType: file.type,
+                upsert: false,
+            });
+
+        if (storageError) {
+            failed.push({ name: file.name, error: storageError.message });
+            continue;
+        }
+
+        const { data: { publicUrl } } = storageClient.storage
+            .from("questions")
+            .getPublicUrl(fileName);
+
+        const descriptionText = file.name.trim() 
+            ? `[${metadata.subject || 'Question'}] ${file.name.trim()}`
+            : (metadata.subject ? `[${metadata.subject}]` : null);
+            
+        const { error: dbError } = await supabase.from("questions").insert({
+            department_id: metadata.department_id,
+            course_id: metadata.course_id,
+            exam_name_id: metadata.exam_name_id,
+            exam_year: metadata.exam_year,
+            session: metadata.session || undefined,
+            description: descriptionText || undefined,
+            tags: [],
+            image_url: publicUrl,
+            created_by: user.id,
+            status: "pending",
+        });
+
+        if (dbError) {
+            await storageClient.storage.from("questions").remove([fileName]);
+            failed.push({ name: file.name, error: dbError.message });
+            continue;
+        }
+
+        uploaded.push(file.name);
+    }
+
+    revalidatePath("/questions");
+
+    if (failed.length > 0 && uploaded.length === 0) {
+        return { success: false, uploaded: 0, failed: failed.length, errors: failed };
+    }
+
+    return {
+        success: true,
+        uploaded: uploaded.length,
+        failed: failed.length,
+        errors: failed.length > 0 ? failed : undefined,
+    };
+}
+
 export async function uploadQuestion(formData: FormData) {
     const supabase = await createClient();
 

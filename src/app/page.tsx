@@ -71,35 +71,35 @@ export default async function Home() {
                                 <div className="h-16 w-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                                     1
                                 </div>
-                                <h3 className="text-lg font-bold mb-2">Sign Up</h3>
+                                <h3 className="text-lg font-bold mb-2">Browse Questions</h3>
                                 <p className="text-muted-foreground text-sm">
-                                    Register with your email - takes less than a minute
+                                    Find past exam papers by department, course code, or year
                                 </p>
                             </div>
                             <div className="text-center">
                                 <div className="h-16 w-16 rounded-2xl bg-green-500/10 text-green-500 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                                     2
                                 </div>
-                                <h3 className="text-lg font-bold mb-2">Search</h3>
+                                <h3 className="text-lg font-bold mb-2">Choose Resource</h3>
                                 <p className="text-muted-foreground text-sm">
-                                    Find past exam papers by department, course code, or year
+                                    Click on any question paper to view full details and verification status
                                 </p>
                             </div>
                             <div className="text-center">
                                 <div className="h-16 w-16 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                                     3
                                 </div>
-                                <h3 className="text-lg font-bold mb-2">Download</h3>
+                                <h3 className="text-lg font-bold mb-2">Download / Access Instantly</h3>
                                 <p className="text-muted-foreground text-sm">
-                                    Get instant access to all papers and start preparing
+                                    Get immediate, free access to view or download high-quality files
                                 </p>
                             </div>
                         </div>
 
                         <div className="text-center mt-10">
-                            <Link href="/register">
+                            <Link href="/questions">
                                 <Button size="lg" className="rounded-full shadow-lg bg-primary hover:bg-primary/90">
-                                    Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+                                    Explore Question Bank <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </Link>
                         </div>

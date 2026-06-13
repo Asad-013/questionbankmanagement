@@ -1,9 +1,9 @@
 import { getTaxonomyItems } from "@/lib/actions/taxonomy";
 import { createClient } from "@/lib/supabase/server";
-import { UploadWizard } from "@/components/features/questions/UploadWizard";
 import { Sparkles, Lock, Download, Search } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { UploadModeSelector } from "@/components/features/questions/UploadModeSelector";
 
 export default async function UploadPage() {
     const supabase = await createClient();
@@ -24,7 +24,6 @@ export default async function UploadPage() {
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                        {/* Download (no login) card */}
                         <div className="relative group">
                             <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-30 group-hover:opacity-60 transition-opacity duration-300" />
                             <div className="relative bg-background border border-border/50 rounded-xl p-8 h-full">
@@ -43,7 +42,6 @@ export default async function UploadPage() {
                             </div>
                         </div>
 
-                        {/* Upload (login required) card */}
                         <div className="relative group">
                             <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-purple-600 rounded-2xl opacity-30 group-hover:opacity-60 transition-opacity duration-300" />
                             <div className="relative bg-background border border-border/50 rounded-xl p-8 h-full">
@@ -88,27 +86,21 @@ export default async function UploadPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
             <div className="container mx-auto px-4 max-w-5xl py-12 md:py-20">
-                <div className="text-center mb-12 space-y-4">
+                <div className="text-center mb-8 space-y-4">
                     <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm bg-background shadow-sm text-primary font-medium mb-4">
                         <Sparkles className="h-3 w-3 mr-2" /> Contribution Mode
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Support Your Classmates</h1>
                     <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Uploading a single paper saves hours for everyone. Help build the most comprehensive archive for ILET Leather Engineering students.
+                        Uploading question papers saves hours for everyone. Choose single or bulk upload below.
                     </p>
                 </div>
 
-                <div className="relative">
-                    {/* Decorative blobs */}
-                    <div className="absolute -top-20 -left-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl -z-10" />
-                    <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl -z-10" />
-
-                    <UploadWizard
-                        departments={departments || []}
-                        examNames={examNames || []}
-                        academicYears={academicYears || []}
-                    />
-                </div>
+                <UploadModeSelector
+                    departments={departments || []}
+                    examNames={examNames || []}
+                    academicYears={academicYears || []}
+                />
             </div>
         </div>
     );

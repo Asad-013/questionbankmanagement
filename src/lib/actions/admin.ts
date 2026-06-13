@@ -228,3 +228,19 @@ export async function deleteQuestion(id: string) {
     revalidatePath("/questions");
     return { success: true };
 }
+
+/**
+ * Fetch all feedback submissions
+ */
+export async function getAllFeedback() {
+    await requireAdminOrModerator();
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from("feedback")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return data;
+}
+

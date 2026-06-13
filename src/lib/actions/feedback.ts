@@ -1,6 +1,7 @@
 "use server";
 
 import { getResendClient } from "@/lib/resend";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const feedbackSchema = z.object({
@@ -42,12 +43,6 @@ export async function sendFeedback(formData: {
     subject: string;
     message: string;
 }) {
-    const resend = getResendClient();
-    if (!resend) {
-        console.error("Resend client could not be initialized (likely missing API key)");
-        return { success: false, error: "Email service not configured." };
-    }
-
     const parsed = feedbackSchema.safeParse(formData);
     if (!parsed.success) {
         return { success: false, error: "Invalid input data." };
@@ -57,8 +52,37 @@ export async function sendFeedback(formData: {
         return { success: false, error: "Too many feedback submissions. Please try again later." };
     }
 
+    // 1. Store feedback in the Supabase database
     try {
-        const { data, error } = await resend.emails.send({
+        const supabase = createAdminClient();
+        const { error: dbError } = await supabase
+            .from("feedback")
+            .insert({
+                name: formData.name,
+                email: formData.email,
+                type: formData.type,
+                subject: formData.subject,
+                message: formData.message,
+            });
+
+        if (dbError) {
+            console.error("Database feedback insert failed:", dbError);
+            return { success: false, error: "Failed to store feedback in database." };
+        }
+    } catch (dbErr) {
+        console.error("Unexpected database error during feedback submission:", dbErr);
+        return { success: false, error: "Database service unavailable." };
+    }
+
+    // 2. Try sending email notification via Resend (optional, non-blocking for user success)
+    const resend = getResendClient();
+    if (!resend) {
+        console.warn("Resend client could not be initialized. Feedback stored in database, skipping email.");
+        return { success: true };
+    }
+
+    try {
+        const { error: emailError } = await resend.emails.send({
             from: "ILET Archive Feedback <onboarding@resend.dev>",
             to: ["badhona931@gmail.com"],
             subject: `[${escapeHtml(formData.type.toUpperCase())}] ${escapeHtml(formData.subject)}`,
@@ -77,14 +101,13 @@ export async function sendFeedback(formData: {
             `,
         });
 
-        if (error) {
-            console.error("Resend Error:", error);
-            return { success: false, error: error.message };
+        if (emailError) {
+            console.error("Resend Email Notification Error:", emailError);
         }
-
-        return { success: true };
-    } catch (err: any) {
-        console.error("Feedback submission failed:", err);
-        return { success: false, error: "Failed to send feedback. Please try again later." };
+    } catch (err) {
+        console.error("Feedback email notification failed:", err);
     }
+
+    return { success: true };
 }
+

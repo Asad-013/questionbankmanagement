@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Settings, FileText, CheckSquare, Users, LogOut, Activity } from "lucide-react";
+import { LayoutDashboard, Settings, FileText, CheckSquare, Users, LogOut, Activity, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
@@ -13,6 +13,7 @@ const navItems: NavItem[] = [
     { href: "/admin", label: "Admin Overview", icon: LayoutDashboard },
     { href: "/admin/content", label: "Question Archive", icon: FileText },
     { href: "/admin/moderation", label: "Pending Reviews", icon: CheckSquare },
+    { href: "/admin/feedback", label: "User Feedback", icon: MessageSquare },
     { href: "/admin/applications", label: "Applications", icon: Users, adminOnly: true },
     { href: "/admin/users", label: "Member Directory", icon: Users, adminOnly: true },
     { href: "/admin/audit", label: "Audit Logs", icon: Activity, adminOnly: true },

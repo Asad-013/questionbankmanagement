@@ -3,8 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Mail, Shield, Users } from "lucide-react";
-import { UserDependentCTA } from "./UserDependentContent";
+import { GraduationCap, Shield, Zap, BookOpen, Search } from "lucide-react";
 
 export function HeroContent() {
     return (
@@ -33,26 +32,33 @@ export function HeroContent() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full max-w-lg">
-                <Link href="/register" className="w-full sm:w-auto">
+                <Link href="#question-bank" className="w-full sm:w-auto">
                     <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-base rounded-xl shadow-xl shadow-primary/20 transition-all hover:scale-105 bg-primary text-white hover:bg-primary/90 font-semibold">
-                        <Mail className="mr-2 h-5 w-5" />
-                        Sign Up Free
+                        <Search className="mr-2 h-5 w-5" />
+                        Browse Questions
                     </Button>
                 </Link>
-                <UserDependentCTA />
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                    <Shield className="h-4 w-4 text-green-500" />
-                    <span>Free forever</span>
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-4 max-w-3xl">
+                <div className="flex items-center gap-1.5 text-xs font-semibold bg-background/60 backdrop-blur-sm border px-3 py-1.5 rounded-full text-muted-foreground shadow-sm">
+                    <Shield className="h-3.5 w-3.5 text-green-500" />
+                    <span>Fully Secured Platform</span>
                 </div>
-                <span className="text-border">•</span>
-                <div className="flex items-center gap-1.5">
-                    <Users className="h-4 w-4 text-blue-500" />
-                    <span>Join 500+ students</span>
+                <div className="flex items-center gap-1.5 text-xs font-semibold bg-background/60 backdrop-blur-sm border px-3 py-1.5 rounded-full text-muted-foreground shadow-sm">
+                    <GraduationCap className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Built for Students</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold bg-background/60 backdrop-blur-sm border px-3 py-1.5 rounded-full text-muted-foreground shadow-sm">
+                    <Zap className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Fast & Reliable Access</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold bg-background/60 backdrop-blur-sm border px-3 py-1.5 rounded-full text-muted-foreground shadow-sm">
+                    <BookOpen className="h-3.5 w-3.5 text-purple-500" />
+                    <span>Exam-Focused Resources</span>
                 </div>
             </div>
         </motion.div>
     );
 }
+
