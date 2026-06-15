@@ -1,135 +1,35 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { z } from "zod";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-const loginSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(1),
-});
+/**
+ * Returns the Clerk userId and the corresponding Supabase user profile.
+ * Throws if the user is not authenticated or not found in public.users.
+ */
+export async function getAuthenticatedUser() {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
 
-const registerSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(8).regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-    ),
-});
+    const supabase = createAdminClient();
+    const { data: profile, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("clerk_id", userId)
+        .single();
 
-export async function login(formData: FormData) {
-    const supabase = await createClient();
-
-    const data = Object.fromEntries(formData);
-    const parsed = loginSchema.safeParse(data);
-
-    if (!parsed.success) {
-        return { error: "Invalid inputs" };
+    if (error || !profile) {
+        throw new Error("User profile not found. Please try signing out and back in.");
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-        email: parsed.data.email,
-        password: parsed.data.password,
-    });
-
-    if (error) {
-        return { error: error.message };
-    }
-
-    revalidatePath("/", "layout");
-    redirect("/?welcome=login");
+    return { userId, profile, supabase };
 }
 
-export async function signup(formData: FormData) {
-    const supabase = await createClient();
-
-    const data = Object.fromEntries(formData);
-    const parsed = registerSchema.safeParse(data);
-
-    if (!parsed.success) {
-        return { error: "Invalid inputs" };
-    }
-
-    const { error, data: authData } = await supabase.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: {
-            data: {
-                role: "student",
-            }
-        }
-    });
-
-    if (error) {
-        return { error: error.message };
-    }
-
-    if (authData.user) {
-        // Attempt to create public profile. If the user is automatically logged in, this succeeds due to the RLS authenticated insert policy.
-        const { error: profileError } = await supabase.from('users').insert({
-            id: authData.user.id,
-            email: authData.user.email as string,
-            role: "student",
-        });
-
-        if (profileError) {
-            console.error("Failed to create user profile in public.users:", profileError);
-        }
-    }
-
-
-    revalidatePath("/", "layout");
-    redirect("/?welcome=signup");
-}
-
+/**
+ * Server-side logout — not needed with Clerk (handled client-side),
+ * but kept for any server-action call sites.
+ */
 export async function logout() {
-    const supabase = await createClient();
-    await supabase.auth.signOut();
-    revalidatePath("/", "layout");
-    redirect("/login");
-}
-
-export async function forgotPassword(formData: FormData) {
-    const supabase = await createClient();
-    const email = formData.get("email") as string;
-
-    if (!email) {
-        return { error: "Email is required" };
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
-    });
-
-    if (error) {
-        return { error: error.message };
-    }
-
-    return { success: "Password reset link sent to your email!" };
-}
-
-export async function resetPassword(formData: FormData) {
-    const supabase = await createClient();
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (password !== confirmPassword) {
-        return { error: "Passwords do not match" };
-    }
-
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(password)) {
-        return { error: "Password must be at least 8 characters with one uppercase, one lowercase, and one number" };
-    }
-
-    const { error } = await supabase.auth.updateUser({
-        password: password,
-    });
-
-    if (error) {
-        return { error: error.message };
-    }
-
-    redirect("/login?message=Password updated successfully");
+    // Clerk sign-out is handled client-side via useClerk().signOut()
+    // This is a no-op placeholder for backwards compatibility.
 }

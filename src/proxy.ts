@@ -1,0 +1,23 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+// Routes accessible without authentication
+const isPublicRoute = createRouteMatcher([
+    "/",
+    "/login(.*)",
+    "/register(.*)",
+    "/questions(.*)",
+    "/api/webhook(.*)",
+    "/api/me(.*)",
+]);
+
+export default clerkMiddleware(async (auth, request) => {
+    if (!isPublicRoute(request)) {
+        await auth.protect();
+    }
+});
+
+export const config = {
+    matcher: [
+        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    ],
+};

@@ -1,29 +1,30 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 async function requireModeratorOrAdmin() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
 
+    const supabase = createAdminClient();
     const { data: profile } = await supabase
         .from("users")
-        .select("role")
-        .eq("id", user.id)
+        .select("id, role")
+        .eq("clerk_id", userId)
         .single();
 
     if (!profile || (profile.role !== "admin" && profile.role !== "moderator")) {
         throw new Error("Unauthorized: Moderators or admins only");
     }
 
-    return { supabase, user };
+    return { supabase, profile };
 }
 
 export async function getPendingQuestions() {
     await requireModeratorOrAdmin();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
         .from("questions")
@@ -46,14 +47,15 @@ export async function getPendingQuestions() {
 }
 
 export async function approveQuestion(id: string) {
-    const { supabase, user } = await requireModeratorOrAdmin();
+    const { profile } = await requireModeratorOrAdmin();
+    const supabase = createAdminClient();
 
     const { error } = await supabase
         .from("questions")
         .update({
             status: "approved",
-            reviewed_by: user.id,
-            reviewed_at: new Date().toISOString()
+            reviewed_by: profile.id,
+            reviewed_at: new Date().toISOString(),
         })
         .eq("id", id);
 
@@ -64,25 +66,26 @@ export async function approveQuestion(id: string) {
         action: "APPROVE_QUESTION",
         entity_type: "question",
         entity_id: id,
-        performed_by: user.id,
-        details: { status: "approved" }
+        performed_by: profile.id,
+        details: { status: "approved" },
     });
 
     revalidatePath("/", "layout");
-    revalidatePath("/questions"); // Update public list
+    revalidatePath("/questions");
     return { success: true };
 }
 
 export async function rejectQuestion(id: string, reason: string) {
-    const { supabase, user } = await requireModeratorOrAdmin();
+    const { profile } = await requireModeratorOrAdmin();
+    const supabase = createAdminClient();
 
     const { error } = await supabase
         .from("questions")
         .update({
             status: "rejected",
             rejection_reason: reason,
-            reviewed_by: user.id,
-            reviewed_at: new Date().toISOString()
+            reviewed_by: profile.id,
+            reviewed_at: new Date().toISOString(),
         })
         .eq("id", id);
 
@@ -93,8 +96,8 @@ export async function rejectQuestion(id: string, reason: string) {
         action: "REJECT_QUESTION",
         entity_type: "question",
         entity_id: id,
-        performed_by: user.id,
-        details: { status: "rejected", reason }
+        performed_by: profile.id,
+        details: { status: "rejected", reason },
     });
 
     revalidatePath("/", "layout");

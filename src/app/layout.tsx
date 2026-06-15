@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { Analytics } from "@vercel/analytics/next";
 import { InstallPrompt } from "@/components/shared/InstallPrompt";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,20 +42,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          inter.variable
-        )}
-      >
-        <ThemeProvider>
-          {children}
-          <InstallPrompt />
-          <Toaster />
-          <Analytics />
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={cn(
+            "min-h-screen bg-background font-sans antialiased",
+            inter.variable
+          )}
+        >
+          <ThemeProvider>
+            {children}
+            <InstallPrompt />
+            <Toaster />
+            <Analytics />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

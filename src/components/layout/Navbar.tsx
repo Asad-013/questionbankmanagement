@@ -1,21 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Search, PlusCircle, Menu, Shield, Bell, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { ThemeToggleIcon } from "@/components/shared/ThemeToggle";
+
+interface UserProfile {
+    id: string;
+    role: string;
+    full_name: string | null;
+    email: string;
+    avatar_url: string | null;
+}
 
 export function Navbar() {
     const pathname = usePathname();
+    const router = useRouter();
+    const { user, isLoaded } = useUser();
+    const { signOut } = useClerk();
+
     const [scrolled, setScrolled] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isModerator, setIsModerator] = useState(false);
-    const [user, setUser] = useState<any>(null);
-    const [userProfile, setUserProfile] = useState<any>(null);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
@@ -23,33 +34,35 @@ export function Navbar() {
             setScrolled(window.scrollY > 10);
         };
         window.addEventListener("scroll", handleScroll);
-
-        const checkAuth = async () => {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-
-            if (user) {
-                const { data: profile } = await supabase
-                    .from("users")
-                    .select("role, full_name, email, avatar_url")
-                    .eq("id", user.id)
-                    .single();
-
-                setUserProfile(profile);
-
-                if (profile?.role === "admin") {
-                    setIsAdmin(true);
-                } else if (profile?.role === "moderator") {
-                    setIsModerator(true);
-                    setIsAdmin(true);
-                }
-            }
-        };
-        checkAuth();
-
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    useEffect(() => {
+        if (!isLoaded) return;
+
+        if (user) {
+            fetch("/api/me")
+                .then((r) => r.json())
+                .then((profile: UserProfile | null) => {
+                    setUserProfile(profile);
+                    if (profile?.role === "admin") {
+                        setIsAdmin(true);
+                        setIsModerator(false);
+                    } else if (profile?.role === "moderator") {
+                        setIsAdmin(true);
+                        setIsModerator(true);
+                    } else {
+                        setIsAdmin(false);
+                        setIsModerator(false);
+                    }
+                })
+                .catch(() => setUserProfile(null));
+        } else {
+            setUserProfile(null);
+            setIsAdmin(false);
+            setIsModerator(false);
+        }
+    }, [user, isLoaded]);
 
     useEffect(() => {
         setMobileMenuOpen(false);
@@ -60,22 +73,9 @@ export function Navbar() {
         { href: "/upload", label: "Contribute", icon: <PlusCircle className="w-4 h-4 mr-1" /> },
     ];
 
-    // Admin/Moderator dashboard is now shown as a prominent button in the action bar (right side)
-    /*
-    if (isAdmin) {
-        navLinks.push({
-            href: isModerator ? "/moderator" : "/admin",
-            label: isModerator ? "Moderator Panel" : "Admin Panel",
-            icon: <Shield className="h-4 w-4 mr-1" />
-        });
-    }
-    */
-
-    const handleSignOut = async () => {
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        window.location.reload();
-    }
+    const handleSignOut = () => {
+        signOut(() => router.push("/"));
+    };
 
     return (
         <header
@@ -116,7 +116,7 @@ export function Navbar() {
                 <div className="flex items-center gap-2">
                     <ThemeToggleIcon className="flex" />
 
-                    {user ? (
+                    {isLoaded && user ? (
                         <>
                             <Link href="/notifications">
                                 <Button variant="ghost" size="icon" className="relative group h-9 w-9 rounded-lg">
@@ -138,18 +138,26 @@ export function Navbar() {
                                         />
                                     ) : (
                                         <div className="h-6 w-6 rounded-md bg-primary/15 text-primary flex items-center justify-center text-xs font-semibold">
-                                            {userProfile?.full_name ? userProfile.full_name[0].toUpperCase() : userProfile?.email?.[0].toUpperCase() || "U"}
+                                            {userProfile?.full_name
+                                                ? userProfile.full_name[0].toUpperCase()
+                                                : userProfile?.email?.[0].toUpperCase() ||
+                                                  user.primaryEmailAddress?.emailAddress?.[0].toUpperCase() ||
+                                                  "U"}
                                         </div>
                                     )}
                                     <span className="hidden md:inline">
-                                        {userProfile?.full_name?.split(' ')[0] || "Profile"}
+                                        {userProfile?.full_name?.split(" ")[0] || "Profile"}
                                     </span>
                                 </Button>
                             </Link>
 
                             {(isAdmin || isModerator) && (
                                 <Link href={isModerator ? "/moderator" : "/admin"} className="hidden md:block">
-                                    <Button variant="outline" size="sm" className="h-9 rounded-lg border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary-foreground transition-all">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-9 rounded-lg border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary-foreground transition-all"
+                                    >
                                         <Shield className="mr-2 h-3.5 w-3.5" />
                                         {isModerator ? "Moderator Panel" : "Admin Panel"}
                                     </Button>
@@ -160,7 +168,7 @@ export function Navbar() {
                                 Sign Out
                             </Button>
                         </>
-                    ) : (
+                    ) : isLoaded ? (
                         <>
                             <Link href="/login" className="hidden sm:block">
                                 <Button variant="ghost" size="sm" className="rounded-lg">
@@ -173,7 +181,7 @@ export function Navbar() {
                                 </Button>
                             </Link>
                         </>
-                    )}
+                    ) : null}
 
                     <Button
                         variant="ghost"
@@ -209,7 +217,7 @@ export function Navbar() {
                             <span className="text-sm text-muted-foreground">Theme</span>
                             <ThemeToggleIcon />
                         </div>
-                        {user && (
+                        {isLoaded && user && (
                             <>
                                 {(isAdmin || isModerator) && (
                                     <Link

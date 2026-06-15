@@ -1,14 +1,26 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function updateProfile(formData: FormData) {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { userId } = await auth();
+    if (!userId) {
         return { success: false, error: "Unauthorized" };
+    }
+
+    const supabase = createAdminClient();
+
+    // Resolve the Supabase user ID by clerk_id
+    const { data: profile } = await supabase
+        .from("users")
+        .select("id")
+        .eq("clerk_id", userId)
+        .single();
+
+    if (!profile) {
+        return { success: false, error: "User profile not found" };
     }
 
     const fullName = formData.get("full_name") as string;
@@ -24,7 +36,7 @@ export async function updateProfile(formData: FormData) {
             bio: bio || null,
             avatar_url: avatarUrl || null,
         })
-        .eq("id", user.id);
+        .eq("id", profile.id);
 
     if (error) {
         return { success: false, error: error.message };

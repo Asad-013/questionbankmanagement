@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { UploadFormData, BulkUploadFormData, BulkUploadResult } from "@/lib/validations/upload";
@@ -11,18 +11,33 @@ const MAX_BULK_FILES = 10;
 const MAX_BULK_SIZE = 50 * 1024 * 1024; // 50MB total for bulk
 
 /**
+ * Resolve the Supabase user record for the currently signed-in Clerk user.
+ */
+async function getSupabaseUser() {
+    const { userId } = await auth();
+    if (!userId) return null;
+
+    const supabase = createAdminClient();
+    const { data: profile } = await supabase
+        .from("users")
+        .select("id, role")
+        .eq("clerk_id", userId)
+        .single();
+
+    return profile ? { supabase, profile } : null;
+}
+
+/**
  * Upload multiple question images in a single batch.
  */
 export async function uploadBulkQuestions(
     files: Array<{ name: string; blob: Blob; type: string }>,
     metadata: BulkUploadFormData
 ): Promise<BulkUploadResult> {
-    const supabase = await createClient();
+    const ctx = await getSupabaseUser();
+    if (!ctx) return { success: false, error: "Unauthorized" };
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-        return { success: false, error: "Unauthorized" };
-    }
+    const { supabase, profile } = ctx;
 
     if (files.length === 0) {
         return { success: false, error: "No files provided" };
@@ -41,23 +56,15 @@ export async function uploadBulkQuestions(
     const { count } = await supabase
         .from("questions")
         .select("*", { count: "exact", head: true })
-        .eq("created_by", user.id)
+        .eq("created_by", profile.id)
         .gte("created_at", oneHourAgo);
 
     const maxAllowed = 5;
     if (count !== null && count + files.length > maxAllowed) {
-        return { 
-            success: false, 
-            error: `Rate limit exceeded. You can upload ${maxAllowed - (count || 0)} more question(s) this hour.` 
+        return {
+            success: false,
+            error: `Rate limit exceeded. You can upload ${maxAllowed - (count || 0)} more question(s) this hour.`,
         };
-    }
-
-    let storageClient;
-    try {
-        storageClient = createAdminClient();
-    } catch (e) {
-        console.warn("Falling back to standard client for storage.");
-        storageClient = supabase;
     }
 
     const uploaded: string[] = [];
@@ -66,7 +73,7 @@ export async function uploadBulkQuestions(
     for (const file of files) {
         const allowedExts = ["jpg", "jpeg", "png", "webp", "gif"];
         const ext = file.type.split("/").pop()?.toLowerCase();
-        
+
         if (!ext || !allowedExts.includes(ext)) {
             failed.push({ name: file.name, error: "Invalid file type" });
             continue;
@@ -84,7 +91,7 @@ export async function uploadBulkQuestions(
 
         const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}_${Math.random().toString(36).substring(2)}.${ext}`;
 
-        const { error: storageError } = await storageClient.storage
+        const { error: storageError } = await supabase.storage
             .from("questions")
             .upload(fileName, file.blob, {
                 contentType: file.type,
@@ -96,14 +103,14 @@ export async function uploadBulkQuestions(
             continue;
         }
 
-        const { data: { publicUrl } } = storageClient.storage
+        const { data: { publicUrl } } = supabase.storage
             .from("questions")
             .getPublicUrl(fileName);
 
-        const descriptionText = file.name.trim() 
-            ? `[${metadata.subject || 'Question'}] ${file.name.trim()}`
-            : (metadata.subject ? `[${metadata.subject}]` : null);
-            
+        const descriptionText = file.name.trim()
+            ? `[${metadata.subject || "Question"}] ${file.name.trim()}`
+            : metadata.subject ? `[${metadata.subject}]` : null;
+
         const { error: dbError } = await supabase.from("questions").insert({
             department_id: metadata.department_id,
             course_id: metadata.course_id,
@@ -113,12 +120,12 @@ export async function uploadBulkQuestions(
             description: descriptionText || undefined,
             tags: [],
             image_url: publicUrl,
-            created_by: user.id,
+            created_by: profile.id,
             status: "pending",
         });
 
         if (dbError) {
-            await storageClient.storage.from("questions").remove([fileName]);
+            await supabase.storage.from("questions").remove([fileName]);
             failed.push({ name: file.name, error: dbError.message });
             continue;
         }
@@ -141,27 +148,23 @@ export async function uploadBulkQuestions(
 }
 
 export async function uploadQuestion(formData: FormData) {
-    const supabase = await createClient();
+    const ctx = await getSupabaseUser();
+    if (!ctx) return { success: false, error: "Unauthorized" };
 
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-        return { success: false, error: "Unauthorized" };
-    }
+    const { supabase, profile } = ctx;
 
     // Rate Limiting: Max 5 uploads per hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count } = await supabase
         .from("questions")
         .select("*", { count: "exact", head: true })
-        .eq("created_by", user.id)
+        .eq("created_by", profile.id)
         .gte("created_at", oneHourAgo);
 
     if (count !== null && count >= 5) {
         return { success: false, error: "Rate limit exceeded: You can only upload 5 questions per hour. Please try again later." };
     }
 
-    // Extract fields from FormData
     const file = formData.get("file") as File | null;
     const department_id = formData.get("department_id") as string;
     const course_id = formData.get("course_id") as string;
@@ -182,15 +185,6 @@ export async function uploadQuestion(formData: FormData) {
         return { success: false, error: "File too large. Maximum size is 10MB." };
     }
 
-    // Use admin client if available, otherwise fallback to standard client
-    let storageClient;
-    try {
-        storageClient = createAdminClient();
-    } catch (e) {
-        console.warn("Falling back to standard client for storage. Ensure RLS SQL scripts are run.");
-        storageClient = supabase;
-    }
-
     const fileExt = file.name.split(".").pop()?.toLowerCase();
     const allowedExts = ["jpg", "jpeg", "png", "webp", "gif"];
     if (!fileExt || !allowedExts.includes(fileExt)) {
@@ -198,7 +192,7 @@ export async function uploadQuestion(formData: FormData) {
     }
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
 
-    const { error: storageError } = await storageClient.storage
+    const { error: storageError } = await supabase.storage
         .from("questions")
         .upload(fileName, file, {
             contentType: file.type,
@@ -207,18 +201,13 @@ export async function uploadQuestion(formData: FormData) {
 
     if (storageError) {
         console.error("Storage upload error:", storageError);
-        if (storageError.message.includes("row-level security")) {
-            return { success: false, error: "Storage permission denied. Please run the provided SQL script in Supabase or add your SUPABASE_SERVICE_ROLE_KEY to .env." };
-        }
         return { success: false, error: `Storage error: ${storageError.message}` };
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = storageClient.storage
+    const { data: { publicUrl } } = supabase.storage
         .from("questions")
         .getPublicUrl(fileName);
 
-    // Insert question record using the user's session client (respects RLS correctly)
     const { error: dbError } = await supabase.from("questions").insert({
         department_id,
         course_id,
@@ -228,14 +217,13 @@ export async function uploadQuestion(formData: FormData) {
         description: description || undefined,
         tags: [],
         image_url: publicUrl,
-        created_by: user.id,
+        created_by: profile.id,
         status: "pending",
     });
 
     if (dbError) {
         console.error("DB insert error:", dbError);
-        // Clean up the uploaded file if DB insert fails
-        await storageClient.storage.from("questions").remove([fileName]);
+        await supabase.storage.from("questions").remove([fileName]);
         return { success: false, error: dbError.message };
     }
 
@@ -244,19 +232,17 @@ export async function uploadQuestion(formData: FormData) {
 }
 
 export async function createQuestion(data: UploadFormData, imagePath: string) {
-    const supabase = await createClient();
+    const ctx = await getSupabaseUser();
+    if (!ctx) return { success: false, error: "Unauthorized" };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return { success: false, error: "Unauthorized" };
-    }
+    const { supabase, profile } = ctx;
 
     // Rate Limiting: Max 5 uploads per hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count } = await supabase
         .from("questions")
-        .select("*", { count: 'exact', head: true })
-        .eq("created_by", user.id)
+        .select("*", { count: "exact", head: true })
+        .eq("created_by", profile.id)
         .gte("created_at", oneHourAgo);
 
     if (count !== null && count >= 5) {
@@ -272,8 +258,8 @@ export async function createQuestion(data: UploadFormData, imagePath: string) {
         description: data.description,
         tags: data.tags,
         image_url: imagePath,
-        created_by: user.id,
-        status: "pending"
+        created_by: profile.id,
+        status: "pending",
     });
 
     if (error) {
@@ -285,14 +271,16 @@ export async function createQuestion(data: UploadFormData, imagePath: string) {
     return { success: true };
 }
 
-export async function getQuestions(filters: {
-    department_id?: string;
-    course_id?: string;
-    exam_name_id?: string;
-    search?: string;
-    year?: string;
-} = {}) {
-    const supabase = await createClient();
+export async function getQuestions(
+    filters: {
+        department_id?: string;
+        course_id?: string;
+        exam_name_id?: string;
+        search?: string;
+        year?: string;
+    } = {}
+) {
+    const supabase = createAdminClient();
     let query = supabase
         .from("questions")
         .select(`

@@ -1,37 +1,52 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
+// ---------------------------------------------------------------------------
+// Auth helpers
+// ---------------------------------------------------------------------------
+
 async function requireAuth() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
-    return { supabase, user };
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const supabase = createAdminClient();
+    const { data: profile } = await supabase
+        .from("users")
+        .select("id, role")
+        .eq("clerk_id", userId)
+        .single();
+
+    if (!profile) throw new Error("Unauthorized");
+    return { supabase, userId, profile };
 }
 
 async function requireAdmin() {
-    const { supabase, user } = await requireAuth();
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
-    return { supabase, user };
+    const ctx = await requireAuth();
+    if (ctx.profile.role !== "admin") throw new Error("Unauthorized: Admins only");
+    return ctx;
 }
 
 async function requireAdminOrModerator() {
-    const { supabase, user } = await requireAuth();
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin" && profile?.role !== "moderator") {
+    const ctx = await requireAuth();
+    if (ctx.profile.role !== "admin" && ctx.profile.role !== "moderator") {
         throw new Error("Unauthorized: Admins or moderators only");
     }
-    return { supabase, user };
+    return ctx;
 }
+
+// ---------------------------------------------------------------------------
+// Dashboard stats
+// ---------------------------------------------------------------------------
 
 /**
  * Fetch dashboard statistics
  */
 export async function getAdminStats() {
     await requireAdminOrModerator();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const [
         { count: usersCount },
@@ -52,7 +67,7 @@ export async function getAdminStats() {
         totalQuestions: questionsCount || 0,
         pendingQuestions: pendingCount || 0,
         totalDepartments: departmentsCount || 0,
-        recentActivity: (recentQuestions || []).map(q => ({
+        recentActivity: (recentQuestions || []).map((q) => ({
             id: q.id,
             type: "question",
             title: `New question: ${q.exam_year}`,
@@ -62,16 +77,16 @@ export async function getAdminStats() {
     };
 }
 
+// ---------------------------------------------------------------------------
+// User management
+// ---------------------------------------------------------------------------
+
 /**
  * Fetch all users
  */
 export async function getAllUsers() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
-
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin") throw new Error("Unauthorized: Admins only");
+    await requireAdmin();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
         .from("users")
@@ -86,18 +101,15 @@ export async function getAllUsers() {
  * Update user role
  */
 export async function updateUserRole(userId: string, newRole: "admin" | "student" | "moderator") {
-    const supabase = await createClient();
+    const { profile: currentUserProfile } = await requireAdmin();
 
-    // Verify current user is admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    const supabase = createAdminClient();
 
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin") return { success: false, error: "Unauthorized: Admins only" };
-
-    if (userId === user.id) {
+    if (userId === currentUserProfile.id) {
         return { success: false, error: "You cannot change your own role." };
     }
+
+    const { data: targetProfile } = await supabase.from("users").select("role").eq("id", userId).single();
 
     const { error } = await supabase
         .from("users")
@@ -111,8 +123,8 @@ export async function updateUserRole(userId: string, newRole: "admin" | "student
         action: "UPDATE_ROLE",
         entity_type: "user",
         entity_id: userId,
-        performed_by: user.id,
-        details: { oldRole: profile.role, newRole }
+        performed_by: currentUserProfile.id,
+        details: { oldRole: targetProfile?.role, newRole },
     });
 
     revalidatePath("/", "layout");
@@ -123,18 +135,11 @@ export async function updateUserRole(userId: string, newRole: "admin" | "student
  * Add / Promote user to moderator by Email
  */
 export async function addModeratorByEmail(email: string) {
-    const supabase = await createClient();
-
-    // Verify current user is admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
-
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin") return { success: false, error: "Unauthorized: Admins only" };
+    const { profile: currentUserProfile } = await requireAdmin();
+    const supabase = createAdminClient();
 
     if (!email || !email.trim()) return { success: false, error: "Email is required" };
 
-    // Find user by email
     const { data: targetUser, error: findError } = await supabase
         .from("users")
         .select("id, role")
@@ -149,7 +154,6 @@ export async function addModeratorByEmail(email: string) {
         return { success: false, error: `User is already a ${targetUser.role}.` };
     }
 
-    // Update role
     const { error: updateError } = await supabase
         .from("users")
         .update({ role: "moderator" })
@@ -161,12 +165,16 @@ export async function addModeratorByEmail(email: string) {
     return { success: true };
 }
 
+// ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
+
 /**
  * Fetch all content (for inventory)
  */
 export async function getAllContent() {
     await requireAdminOrModerator();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
         .from("questions")
         .select(`
@@ -184,19 +192,12 @@ export async function getAllContent() {
 }
 
 /**
- * Delete a question (Hard delete)
+ * Delete a question (Soft delete)
  */
 export async function deleteQuestion(id: string) {
-    const supabase = await createClient();
+    const { profile } = await requireAdmin();
+    const supabase = createAdminClient();
 
-    // Verify admin only can delete
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
-
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
-    if (profile?.role !== "admin") return { success: false, error: "Unauthorized: Only Admins can delete questions" };
-
-    // Get question first to find image path
     const { data: question, error: fetchError } = await supabase
         .from("questions")
         .select("image_url")
@@ -207,7 +208,6 @@ export async function deleteQuestion(id: string) {
         return { success: false, error: "Question not found" };
     }
 
-    // Update DB (Soft Delete)
     const { error: dbError } = await supabase
         .from("questions")
         .update({ deleted_at: new Date().toISOString() })
@@ -215,13 +215,12 @@ export async function deleteQuestion(id: string) {
 
     if (dbError) return { success: false, error: dbError.message };
 
-    // Log the Audit
     await supabase.from("audit_logs").insert({
         action: "DELETE_QUESTION",
         entity_type: "question",
         entity_id: id,
-        performed_by: user.id,
-        details: { soft_deleted: true }
+        performed_by: profile.id,
+        details: { soft_deleted: true },
     });
 
     revalidatePath("/admin/content");
@@ -234,7 +233,7 @@ export async function deleteQuestion(id: string) {
  */
 export async function getAllFeedback() {
     await requireAdminOrModerator();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
         .from("feedback")
         .select("*")
@@ -243,4 +242,3 @@ export async function getAllFeedback() {
     if (error) throw new Error(error.message);
     return data;
 }
-
