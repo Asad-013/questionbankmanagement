@@ -5,7 +5,7 @@ import { updateProfile } from "@/lib/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Phone, ImagePlus, FileText, Save } from "lucide-react";
+import { Loader2, User, ImagePlus, FileText, Save } from "lucide-react";
 import { toast } from "sonner";
 
 type ProfileFormProps = {
@@ -57,7 +57,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
                     />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 sm:col-span-2">
                     <Label className="text-sm font-medium text-muted-foreground">Email Address</Label>
                     <Input
                         type="email"
@@ -68,21 +68,6 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
                     <p className="text-[11px] text-muted-foreground/70">
                         Email cannot be changed.
                     </p>
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="phone_number" className="text-sm font-medium flex items-center gap-2">
-                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                        Phone Number
-                    </Label>
-                    <Input
-                        id="phone_number"
-                        name="phone_number"
-                        type="tel"
-                        placeholder="+8801XXXXXXXXX"
-                        defaultValue={initialData.phone_number}
-                        className="h-11 rounded-xl"
-                    />
                 </div>
 
                 <div className="space-y-2 sm:col-span-2">
