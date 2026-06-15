@@ -1,15 +1,14 @@
+import { auth } from "@clerk/nextjs/server";
 import { getTaxonomyItems } from "@/lib/actions/taxonomy";
-import { createClient } from "@/lib/supabase/server";
 import { Sparkles, Lock, Download, Search } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UploadModeSelector } from "@/components/features/questions/UploadModeSelector";
 
 export default async function UploadPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { userId } = await auth();
 
-    if (!user) {
+    if (!userId) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
                 <div className="container mx-auto px-4 max-w-5xl py-20">

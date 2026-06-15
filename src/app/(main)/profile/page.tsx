@@ -1,20 +1,20 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/features/profile/ProfileForm";
 
 export default async function ProfilePage() {
-    const supabase = await createClient();
+    const { userId } = await auth();
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!userId) {
         redirect("/login");
     }
 
+    const supabase = createAdminClient();
     const { data: profile } = await supabase
         .from("users")
         .select("*")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
 
     if (!profile) {

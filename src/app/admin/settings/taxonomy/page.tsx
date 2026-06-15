@@ -1,14 +1,15 @@
 import { TaxonomyManager } from "@/components/features/admin/TaxonomyManager";
 
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 
 export default async function TaxonomyPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/login");
+    const { userId } = await auth();
+    if (!userId) redirect("/login");
 
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    const supabase = createAdminClient();
+    const { data: profile } = await supabase.from("users").select("role").eq("clerk_id", userId).single();
     if (profile?.role !== "admin") redirect("/admin");
 
     return (

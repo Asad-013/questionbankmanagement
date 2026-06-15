@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import {
     Table,
@@ -11,18 +12,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export default async function AuditLogsPage() {
-    const supabase = await createClient();
+    const { userId } = await auth();
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!userId) {
         redirect("/login");
     }
 
+    const supabase = createAdminClient();
     const { data: profile } = await supabase
         .from("users")
         .select("role")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
 
     if (!profile || profile.role !== "admin") {

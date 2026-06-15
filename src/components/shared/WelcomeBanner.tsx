@@ -3,24 +3,15 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Search, ShieldCheck, UploadCloud, Rocket, Upload, BookOpen, CheckCircle2, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useUser as useClerkUser } from "@clerk/nextjs";
 
 export function WelcomeBanner() {
     const searchParams = useSearchParams();
     const welcome = searchParams.get("welcome");
-    const [user, setUser] = useState<any>(null);
+    const { user } = useClerkUser();
     const [showWelcome, setShowWelcome] = useState(!!welcome);
-
-    useEffect(() => {
-        const checkAuth = async () => {
-            const { createClient } = await import("@/lib/supabase/client");
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-        };
-        checkAuth();
-    }, []);
 
     if (!showWelcome) return null;
 
@@ -106,19 +97,6 @@ export function WelcomeBanner() {
 }
 
 export function useUser() {
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const checkAuth = async () => {
-            const { createClient } = await import("@/lib/supabase/client");
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-            setLoading(false);
-        };
-        checkAuth();
-    }, []);
-
-    return { user, loading };
+    const { user, isLoaded } = useClerkUser();
+    return { user, loading: !isLoaded };
 }

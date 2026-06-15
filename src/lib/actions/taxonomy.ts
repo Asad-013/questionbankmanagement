@@ -5,22 +5,25 @@ import { revalidatePath } from "next/cache";
 
 export type TaxonomyType = "exam_names" | "courses" | "departments" | "academic_years";
 
-async function requireAdmin() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
+async function requireAdmin() {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const supabase = createAdminClient();
     const { data: profile } = await supabase
         .from("users")
         .select("role")
-        .eq("id", user.id)
+        .eq("clerk_id", userId)
         .single();
 
     if (!profile || profile.role !== "admin") {
         throw new Error("Unauthorized: Admins only");
     }
 
-    return { supabase, user };
+    return { supabase, userId };
 }
 
 export async function createTaxonomyItem(

@@ -2,15 +2,16 @@ import { getAllUsers } from "@/lib/actions/admin";
 import { UserTable } from "@/components/features/admin/UserTable";
 import { AddModeratorDialog } from "@/components/features/admin/AddModeratorDialog";
 
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 
 export default async function UsersPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/login");
+    const { userId } = await auth();
+    if (!userId) redirect("/login");
 
-    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    const supabase = createAdminClient();
+    const { data: profile } = await supabase.from("users").select("role").eq("clerk_id", userId).single();
     if (profile?.role !== "admin") redirect("/admin");
 
     const users = await getAllUsers();

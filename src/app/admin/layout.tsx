@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminHeader } from "@/components/features/admin/AdminHeader";
 import { AdminSidebar } from "@/components/features/admin/AdminSidebar";
 
@@ -8,19 +9,17 @@ export default async function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const supabase = await createClient();
+    const { userId } = await auth();
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!userId) {
         redirect("/login");
     }
 
-    // Check role
+    const supabase = createAdminClient();
     const { data: profile } = await supabase
         .from("users")
-        .select("role")
-        .eq("id", user.id)
+        .select("role, email")
+        .eq("clerk_id", userId)
         .single();
 
     if (!profile || profile.role !== "admin") {
@@ -33,7 +32,7 @@ export default async function AdminLayout({
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-                <AdminHeader userEmail={user.email || ""} role={profile.role} />
+                <AdminHeader userEmail={profile.email || ""} role={profile.role} />
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
                         {children}

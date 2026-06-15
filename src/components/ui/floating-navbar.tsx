@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ThemeToggleIcon } from "@/components/shared/ThemeToggle";
+import { useUser } from "@clerk/nextjs";
 
 export const FloatingNav = ({
     navItems,
@@ -23,34 +24,37 @@ export const FloatingNav = ({
 }) => {
     const { scrollYProgress } = useScroll();
 
+    const { user, isLoaded } = useUser();
     const [visible, setVisible] = useState(true);
-    const [user, setUser] = React.useState<any>(null);
     const [isAdmin, setIsAdmin] = React.useState(false);
     const [isModerator, setIsModerator] = React.useState(false);
 
     React.useEffect(() => {
-        const checkAuth = async () => {
-            const { createClient } = await import("@/lib/supabase/client");
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-
-            if (user) {
-                const { data: profile } = await supabase
-                    .from("users")
-                    .select("role")
-                    .eq("id", user.id)
-                    .single();
-
-                if (profile?.role === "admin") {
-                    setIsAdmin(true);
-                } else if (profile?.role === "moderator") {
-                    setIsModerator(true);
-                }
-            }
-        };
-        checkAuth();
-    }, []);
+        if (!isLoaded) return;
+        if (user) {
+            fetch("/api/me")
+                .then((r) => r.json())
+                .then((profile) => {
+                    if (profile?.role === "admin") {
+                        setIsAdmin(true);
+                        setIsModerator(false);
+                    } else if (profile?.role === "moderator") {
+                        setIsAdmin(true);
+                        setIsModerator(true);
+                    } else {
+                        setIsAdmin(false);
+                        setIsModerator(false);
+                    }
+                })
+                .catch(() => {
+                    setIsAdmin(false);
+                    setIsModerator(false);
+                });
+        } else {
+            setIsAdmin(false);
+            setIsModerator(false);
+        }
+    }, [user, isLoaded]);
 
     useMotionValueEvent(scrollYProgress, "change", (current) => {
         // ...Direction checking logic...

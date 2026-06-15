@@ -1,14 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Bell, Clock } from "lucide-react";
 
 export default async function NotificationsPage() {
-    const supabase = await createClient();
+    const { userId } = await auth();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!userId) {
+        redirect("/login");
+    }
 
-    if (!user) {
+    const supabase = createAdminClient();
+    const { data: profile } = await supabase
+        .from("users")
+        .select("id")
+        .eq("clerk_id", userId)
+        .single();
+
+    if (!profile) {
         redirect("/login");
     }
 
@@ -23,7 +33,7 @@ export default async function NotificationsPage() {
             departments(name),
             courses(code)
         `)
-        .eq("created_by", user.id)
+        .eq("created_by", profile.id)
         .in("status", ["approved", "rejected"])
         .order("reviewed_at", { ascending: false })
         .limit(20);
