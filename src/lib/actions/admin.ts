@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 async function requireAuth() {
@@ -84,11 +85,14 @@ export async function getAllUsers() {
 
 /**
  * Update user role
+ * SECURITY FIX (VULN-13): Uses admin client for the update.
+ * The users RLS UPDATE policy is USING(auth.uid() = id), which blocks updating
+ * any row where the target id != the admin's own id. Using the session client
+ * caused updates to silently fail while returning { success: true }.
  */
 export async function updateUserRole(userId: string, newRole: "admin" | "student" | "moderator") {
+    // Step 1: Verify the requester is an admin using their session client (respects RLS)
     const supabase = await createClient();
-
-    // Verify current user is admin
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
@@ -99,20 +103,22 @@ export async function updateUserRole(userId: string, newRole: "admin" | "student
         return { success: false, error: "You cannot change your own role." };
     }
 
-    const { error } = await supabase
+    // Step 2: Perform the privileged update using admin client (bypasses RLS correctly)
+    const adminClient = createAdminClient();
+    const { error } = await adminClient
         .from("users")
         .update({ role: newRole })
         .eq("id", userId);
 
     if (error) return { success: false, error: error.message };
 
-    // Audit Log
-    await supabase.from("audit_logs").insert({
+    // Step 3: Write audit log via admin client (audit_logs requires service_role insert)
+    await adminClient.from("audit_logs").insert({
         action: "UPDATE_ROLE",
         entity_type: "user",
         entity_id: userId,
         performed_by: user.id,
-        details: { oldRole: profile.role, newRole }
+        details: { oldRole: profile?.role, newRole }
     });
 
     revalidatePath("/", "layout");

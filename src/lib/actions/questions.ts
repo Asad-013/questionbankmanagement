@@ -52,13 +52,10 @@ export async function uploadBulkQuestions(
         };
     }
 
-    let storageClient;
-    try {
-        storageClient = createAdminClient();
-    } catch (e) {
-        console.warn("Falling back to standard client for storage.");
-        storageClient = supabase;
-    }
+    // SECURITY FIX: Use admin client directly — no silent fallback to anon key.
+    // If SUPABASE_SERVICE_ROLE_KEY is missing, createAdminClient() throws, which
+    // surfaces the misconfiguration immediately rather than silently degrading.
+    const storageClient = createAdminClient();
 
     const uploaded: string[] = [];
     const failed: Array<{ name: string; error: string }> = [];
@@ -182,14 +179,8 @@ export async function uploadQuestion(formData: FormData) {
         return { success: false, error: "File too large. Maximum size is 10MB." };
     }
 
-    // Use admin client if available, otherwise fallback to standard client
-    let storageClient;
-    try {
-        storageClient = createAdminClient();
-    } catch (e) {
-        console.warn("Falling back to standard client for storage. Ensure RLS SQL scripts are run.");
-        storageClient = supabase;
-    }
+    // SECURITY FIX: Use admin client directly — no silent fallback.
+    const storageClient = createAdminClient();
 
     const fileExt = file.name.split(".").pop()?.toLowerCase();
     const allowedExts = ["jpg", "jpeg", "png", "webp", "gif"];
@@ -249,6 +240,19 @@ export async function createQuestion(data: UploadFormData, imagePath: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         return { success: false, error: "Unauthorized" };
+    }
+
+    // SECURITY FIX (VULN-11): Validate that imagePath is a URL from our own
+    // Supabase storage — not an arbitrary external URL. Storing attacker-controlled
+    // URLs allows content injection, user tracking, and reputational damage.
+    const allowedStorageHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname;
+    try {
+        const parsedUrl = new URL(imagePath);
+        if (parsedUrl.hostname !== allowedStorageHost) {
+            return { success: false, error: "Invalid image path: must be from authorized storage." };
+        }
+    } catch {
+        return { success: false, error: "Invalid image path URL format." };
     }
 
     // Rate Limiting: Max 5 uploads per hour

@@ -100,13 +100,21 @@ export const FloatingNav = ({
                 <div className="flex items-center gap-2 pr-2">
                     <ThemeToggleIcon className="h-8 w-8 !border-none !bg-transparent !shadow-none" />
                     {user ? (
-                        <Link
-                            href="/questions"
-                            className="border text-sm font-bold relative border-primary/20 bg-primary/10 text-primary px-5 py-2 rounded-full transition-all hover:bg-primary/20"
-                        >
-                            <span>Archive</span>
-                            <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-primary to-transparent h-px" />
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/profile"
+                                className="border text-sm font-bold relative border-neutral-200 dark:border-white/[0.2] text-black dark:text-white px-4 py-2 rounded-full transition-all hover:bg-neutral-100 dark:hover:bg-white/10"
+                            >
+                                <span>Profile</span>
+                            </Link>
+                            <Link
+                                href="/questions"
+                                className="border text-sm font-bold relative border-primary/20 bg-primary/10 text-primary px-4 py-2 rounded-full transition-all hover:bg-primary/20"
+                            >
+                                <span>Archive</span>
+                                <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-primary to-transparent h-px" />
+                            </Link>
+                        </div>
                     ) : (
                         <Link
                             href="/login"

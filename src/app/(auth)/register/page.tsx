@@ -9,6 +9,7 @@ import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const BENEFITS = [
     { icon: FileText, text: "Access all past exam papers" },
@@ -77,6 +78,26 @@ export default function RegisterPage() {
             console.error("Signup error", error);
             toast.error("Something went wrong. Please try again.");
         } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setIsLoading(true);
+        try {
+            const supabase = createClient();
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+            if (error) {
+                toast.error("Google sign-in failed. Please try again.");
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error(error);
             setIsLoading(false);
         }
     };
@@ -218,6 +239,40 @@ export default function RegisterPage() {
                     By signing up, you agree to contribute to the archive and follow community guidelines.
                 </p>
             </form>
+
+            <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-muted"></div>
+                <span className="flex-shrink mx-4 text-muted-foreground text-xs uppercase tracking-wider">or</span>
+                <div className="flex-grow border-t border-muted"></div>
+            </div>
+
+            <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 rounded-xl font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-all active:scale-[0.98]"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+            >
+                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                    <path
+                        fill="#EA4335"
+                        d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582l3.51-3.51C17.642 1.091 14.982 0 12 0 7.354 0 3.307 2.68 1.285 6.56l3.981 3.205z"
+                    />
+                    <path
+                        fill="#34A853"
+                        d="M16.04 15.345c-1.077.733-2.427 1.164-4.04 1.164-2.936 0-5.427-1.982-6.31-4.654L1.71 15.06A11.976 11.976 0 0 0 12 24c3.273 0 6.018-1.09 8.027-2.945l-4.027-3.21-1.96 1.5z"
+                    />
+                    <path
+                        fill="#4285F4"
+                        d="M23.49 12.273c0-.818-.073-1.609-.209-2.373H12v4.5h6.49c-.282 1.482-1.12 2.74-2.38 3.59l4.027 3.21c2.355-2.173 3.71-5.373 3.71-8.927z"
+                    />
+                    <path
+                        fill="#FBBC05"
+                        d="M5.69 11.855a7.11 7.11 0 0 1 0-2.2L1.71 6.45A11.988 11.988 0 0 0 0 12c0 1.98.48 3.855 1.336 5.5l3.982-3.11a7.11 7.11 0 0 1 .372-2.535z"
+                    />
+                </svg>
+                Continue with Google
+            </Button>
 
             <div className="text-center text-sm text-muted-foreground">
                 Already have an account?{" "}

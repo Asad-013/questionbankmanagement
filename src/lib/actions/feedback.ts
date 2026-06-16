@@ -22,19 +22,35 @@ function escapeHtml(str: string): string {
         .replace(/'/g, "&#039;");
 }
 
-const feedbackTimestamps = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const RATE_LIMIT_MAX = 5;
 
-function checkRateLimit(email: string): boolean {
-    const now = Date.now();
-    const timestamps = (feedbackTimestamps.get(email) || []).filter(
-        (ts) => now - ts < RATE_LIMIT_WINDOW_MS
-    );
-    if (timestamps.length >= RATE_LIMIT_MAX) return false;
-    timestamps.push(now);
-    feedbackTimestamps.set(email, timestamps);
-    return true;
+/**
+ * SECURITY FIX (VULN-05): Database-backed rate limiter.
+ * The previous in-memory Map was completely ineffective in serverless / multi-instance
+ * deployments. Each function instance had its own isolated Map that reset on cold
+ * starts, allowing unlimited spam. The DB-backed approach persists across instances.
+ */
+async function checkRateLimit(email: string): Promise<boolean> {
+    try {
+        const supabase = createAdminClient();
+        const oneHourAgo = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+        const { count, error } = await supabase
+            .from('feedback')
+            .select('*', { count: 'exact', head: true })
+            .eq('email', email.toLowerCase().trim())
+            .gte('created_at', oneHourAgo);
+
+        if (error) {
+            // On DB error, fail open to avoid blocking legitimate users — log for monitoring
+            console.error('Rate limit check failed:', error);
+            return true;
+        }
+
+        return (count ?? 0) < RATE_LIMIT_MAX;
+    } catch {
+        return true; // Fail open on unexpected errors
+    }
 }
 
 export async function sendFeedback(formData: {
@@ -50,7 +66,7 @@ export async function sendFeedback(formData: {
         return { success: false, error: "Invalid input data." };
     }
 
-    if (!checkRateLimit(formData.email)) {
+    if (!(await checkRateLimit(formData.email))) {
         return { success: false, error: "Too many feedback submissions. Please try again later." };
     }
 

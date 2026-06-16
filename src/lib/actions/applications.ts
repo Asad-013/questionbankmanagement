@@ -4,9 +4,30 @@ import { revalidatePath } from 'next/cache';
 import { getResendClient } from '@/lib/resend';
 import { createClient } from '@/lib/supabase/server';
 
-export async function getApplications() {
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth guard — CRITICAL FIX: both actions below were previously unauthenticated
+// ─────────────────────────────────────────────────────────────────────────────
+async function requireAdmin() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
 
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') throw new Error('Unauthorized: Admins only');
+  return { supabase, user };
+}
+
+export async function getApplications() {
+  // SECURITY FIX (VULN-02): Added admin-only authorization check.
+  // Previously this action had NO auth check, exposing full PII of all applicants.
+  await requireAdmin();
+
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('applications')
     .select('*')
@@ -21,6 +42,10 @@ export async function getApplications() {
 }
 
 export async function updateApplicationStatus(id: string, status: 'approved' | 'rejected') {
+  // SECURITY FIX (VULN-03): Added admin-only authorization check.
+  // Previously this action had NO auth check, allowing any user to approve themselves.
+  await requireAdmin();
+
   try {
     const supabase = await createClient();
 
@@ -55,7 +80,7 @@ export async function updateApplicationStatus(id: string, status: 'approved' | '
           await resend.emails.send({
             from: 'ILET <onboarding@resend.dev>',
             to: appData.email,
-            subject: isApproved 
+            subject: isApproved
               ? 'Application Update: You have been approved! - ILET'
               : 'Application Update regarding your ILET application',
             html: `

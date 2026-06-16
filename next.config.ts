@@ -11,12 +11,17 @@ const securityHeaders = [
         key: "Content-Security-Policy",
         value: [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+            // SECURITY FIX (VULN-14): Removed 'unsafe-eval'.
+            // unsafe-eval enables eval()/new Function() which amplifies any XSS.
+            // Next.js 14 production builds do not require unsafe-eval.
+            // If you see errors after this change, check for third-party scripts using eval().
+            "script-src 'self' 'unsafe-inline'",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://*.supabase.co",
-            "font-src 'self' data:",
-            "connect-src 'self' https://*.supabase.co https://api.resend.com",
+            "font-src 'self'",
+            "connect-src 'self' https://*.supabase.co https://api.resend.com wss://*.supabase.co",
             "frame-ancestors 'none'",
+            "form-action 'self'",
         ].join("; "),
     },
 ];

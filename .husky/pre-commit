@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+# Pre-commit hook: Block secrets from being committed
+# Installed via husky — runs automatically before every git commit
+
+BLOCKED_PATTERNS="sb_secret_[a-zA-Z0-9_-]+|sk_test_[a-zA-Z0-9_-]+|sk_live_[a-zA-Z0-9_-]+|re_[a-zA-Z0-9_-]+"
+
+fail=0
+
+# 1. Block if any real .env file (excluding .env.example) is staged
+if git diff --cached --name-only | grep -E "^\.env" | grep -qv "env\.example"; then
+    echo "[SECURITY] BLOCKED: A .env file is staged for commit."
+    echo "  -> Unstage with: git restore --staged \$(git diff --cached --name-only | grep '^\.env')"
+    fail=1
+fi
+
+# 2. Block if staged diff (excluding .env.example) contains known secret key patterns
+if git diff --cached -U0 -- . ':!.env.example' | grep -qE "^\+.*($BLOCKED_PATTERNS)"; then
+    echo "[SECURITY] BLOCKED: Staged changes contain secret keys or tokens."
+    echo "  -> Review with:  git diff --cached"
+    echo "  -> Unstage with: git restore --staged <file>"
+    fail=1
+fi
+
+if [ "$fail" -eq 1 ]; then
+    echo ""
+    echo "Commit aborted. Remove secrets before committing."
+    exit 1
+fi
+
+exit 0

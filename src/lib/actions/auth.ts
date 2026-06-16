@@ -18,6 +18,10 @@ const registerSchema = z.object({
     ),
 });
 
+// SECURITY FIX (VULN-07): Normalized error messages to prevent account enumeration.
+// Previously, raw Supabase errors were returned, revealing whether an email
+// is registered ("User already registered"), has verified email, etc.
+
 export async function login(formData: FormData) {
     const supabase = await createClient();
 
@@ -25,7 +29,7 @@ export async function login(formData: FormData) {
     const parsed = loginSchema.safeParse(data);
 
     if (!parsed.success) {
-        return { error: "Invalid inputs" };
+        return { error: "Invalid email or password" }; // Generic — don't reveal validation specifics
     }
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -34,11 +38,14 @@ export async function login(formData: FormData) {
     });
 
     if (error) {
-        return { error: error.message };
+        // SECURITY FIX: Never return the raw Supabase error message.
+        // Supabase distinguishes "Invalid login credentials" from "Email not confirmed"
+        // which enables account enumeration. Always return a single generic message.
+        return { error: "Invalid email or password" };
     }
 
     revalidatePath("/", "layout");
-    redirect("/?welcome=login");
+    redirect("/");
 }
 
 export async function signup(formData: FormData) {
@@ -62,11 +69,14 @@ export async function signup(formData: FormData) {
     });
 
     if (error) {
-        return { error: error.message };
+        // SECURITY FIX: Never return the raw Supabase error.
+        // Supabase returns "User already registered" which confirms an email exists.
+        return { error: "Unable to create account. Please try again later." };
     }
 
-    if (authData.user) {
-        // Attempt to create public profile. If the user is automatically logged in, this succeeds due to the RLS authenticated insert policy.
+    if (authData.user && authData.session) {
+        // User was auto-confirmed (no email verification required in Supabase settings).
+        // Create the public profile if session exists.
         const { error: profileError } = await supabase.from('users').insert({
             id: authData.user.id,
             email: authData.user.email as string,
@@ -76,11 +86,15 @@ export async function signup(formData: FormData) {
         if (profileError) {
             console.error("Failed to create user profile in public.users:", profileError);
         }
+
+        revalidatePath("/", "layout");
+        redirect("/");
     }
 
-
-    revalidatePath("/", "layout");
-    redirect("/?welcome=signup");
+    // Email confirmation required — don't log the user in yet
+    return {
+        success: "Please check your email to confirm your account before signing in."
+    };
 }
 
 export async function logout() {
@@ -92,21 +106,24 @@ export async function logout() {
 
 export async function forgotPassword(formData: FormData) {
     const supabase = await createClient();
-    const email = formData.get("email") as string;
 
-    if (!email) {
-        return { error: "Email is required" };
+    const emailSchema = z.string().email();
+    const emailResult = emailSchema.safeParse(formData.get("email"));
+
+    if (!emailResult.success) {
+        return { error: "Please enter a valid email address" };
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    // SECURITY FIX (VULN-07): Always return success regardless of whether the
+    // email exists. This prevents email enumeration — an attacker cannot use
+    // error/success differences to confirm whether an email is registered.
+    await supabase.auth.resetPasswordForEmail(emailResult.data, {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
     });
 
-    if (error) {
-        return { error: error.message };
-    }
-
-    return { success: "Password reset link sent to your email!" };
+    return {
+        success: "If an account exists for this email, a password reset link has been sent."
+    };
 }
 
 export async function resetPassword(formData: FormData) {
@@ -128,8 +145,11 @@ export async function resetPassword(formData: FormData) {
     });
 
     if (error) {
-        return { error: error.message };
+        return { error: "Failed to update password. Your reset link may have expired." };
     }
 
-    redirect("/login?message=Password updated successfully");
+    // SECURITY FIX (VULN-12): Use a whitelist key instead of free-text in the URL.
+    // Previously: redirect("/login?message=Password updated successfully")
+    // An attacker could craft: /login?message=Your+account+is+blocked.+Enter+credentials+here
+    redirect("/login?msg=password-updated");
 }
