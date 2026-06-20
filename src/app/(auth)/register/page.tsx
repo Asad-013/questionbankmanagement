@@ -24,15 +24,38 @@ export default function RegisterPage() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isEmailValid, setIsEmailValid] = useState<boolean | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const passwordRequirements = [
-        { test: password.length >= 8, label: "8+ chars" },
-        { test: /[a-z]/.test(password), label: "lowercase" },
-        { test: /[A-Z]/.test(password), label: "uppercase" },
-        { test: /\d/.test(password), label: "number" },
+        { test: password.length >= 8, label: "At least 8 characters" },
+        { test: /[a-z]/.test(password), label: "At least one lowercase letter" },
+        { test: /[A-Z]/.test(password), label: "At least one uppercase letter" },
+        { test: /\d/.test(password), label: "At least one number" },
     ];
     const isPasswordValid = passwordRequirements.every(r => r.test);
     const doPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
+
+    // Calculate password strength score (0 to 4)
+    const strengthScore = passwordRequirements.filter(r => r.test).length;
+    
+    // Get strength label and color styles
+    const getStrengthDetails = () => {
+        if (!password) return { label: "Not entered", color: "bg-muted", textClass: "text-muted-foreground", width: "w-0" };
+        switch (strengthScore) {
+            case 1:
+                return { label: "Weak", color: "bg-red-500", textClass: "text-red-500 font-semibold", width: "w-1/4" };
+            case 2:
+                return { label: "Fair", color: "bg-orange-500", textClass: "text-orange-500 font-semibold", width: "w-2/4" };
+            case 3:
+                return { label: "Good", color: "bg-blue-500", textClass: "text-blue-500 font-semibold", width: "w-3/4" };
+            case 4:
+                return { label: "Strong", color: "bg-emerald-500", textClass: "text-emerald-500 font-semibold", width: "w-full" };
+            default:
+                return { label: "Very Weak", color: "bg-red-600", textClass: "text-red-600 font-bold", width: "w-1/12" };
+        }
+    };
+
+    const strength = getStrengthDetails();
 
     const validateEmail = (email: string) => {
         if (!email) {
@@ -73,6 +96,9 @@ export default function RegisterPage() {
             if (result?.error) {
                 toast.error(result.error);
                 setIsLoading(false);
+            } else if (result?.success) {
+                setSuccessMessage(result.success);
+                toast.success("Account created! Please verify your email.");
             }
         } catch (error) {
             console.error("Signup error", error);
@@ -102,6 +128,36 @@ export default function RegisterPage() {
         }
     };
 
+    if (successMessage) {
+        return (
+            <div className="animate-in fade-in zoom-in-95 duration-500 space-y-6 text-center py-4">
+                <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-2">
+                    <Mail className="h-8 w-8" />
+                </div>
+                <div className="space-y-2">
+                    <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                        We sent a verification link to <span className="font-semibold text-foreground">{email}</span>.
+                    </p>
+                </div>
+                
+                <div className="p-4 bg-muted/50 border rounded-2xl text-xs text-muted-foreground max-w-sm mx-auto text-left leading-relaxed">
+                    <span className="font-bold text-foreground block mb-1">Didn&apos;t get the email?</span>
+                    Check your spam folder or try to sign in with your email and password to trigger another verification link.
+                </div>
+
+                <div className="pt-4 flex flex-col gap-2">
+                    <Button asChild className="w-full h-11 rounded-xl">
+                        <Link href="/login">Go to Sign In</Link>
+                    </Button>
+                    <Button variant="ghost" asChild className="w-full h-11 rounded-xl">
+                        <Link href="/">Back to Homepage</Link>
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
             <div className="space-y-2">
@@ -119,18 +175,18 @@ export default function RegisterPage() {
                     <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="you@example.com"
-                            required
-                            value={email}
-                            onChange={handleEmailChange}
-                            className={cn(
-                                "h-11 pl-10 pr-10 rounded-xl transition-colors",
-                                isEmailValid === true && "border-green-500 bg-green-50 dark:bg-green-950/30",
-                                isEmailValid === false && email.length > 0 && "border-red-500 bg-red-50 dark:bg-red-950/30"
-                            )}
+                             id="email"
+                             name="email"
+                             type="email"
+                             placeholder="you@example.com"
+                             required
+                             value={email}
+                             onChange={handleEmailChange}
+                             className={cn(
+                                 "h-11 pl-10 pr-10 rounded-xl transition-colors",
+                                 isEmailValid === true && "border-green-500 bg-green-50 dark:bg-green-950/30",
+                                 isEmailValid === false && email.length > 0 && "border-red-500 bg-red-50 dark:bg-red-950/30"
+                             )}
                         />
                         {isEmailValid !== null && email.length > 0 && (
                             <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
@@ -150,8 +206,15 @@ export default function RegisterPage() {
                     )}
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                        {password && (
+                            <span className={cn("text-xs transition-colors duration-300", strength.textClass)}>
+                                {strength.label}
+                            </span>
+                        )}
+                    </div>
                     <div className="relative">
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -173,19 +236,35 @@ export default function RegisterPage() {
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {passwordRequirements.map((req, i) => (
-                            <span
-                                key={i}
-                                className={cn(
-                                    "text-[10px] px-2 py-1 rounded-full",
-                                    req.test ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"
-                                )}
-                            >
-                                {req.label}
-                            </span>
-                        ))}
-                    </div>
+
+                    {/* Password Strength Indicator Visual Meter */}
+                    {password.length > 0 && (
+                        <div className="space-y-2 py-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                            {/* Visual Progress Bar */}
+                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div className={cn("h-full transition-all duration-500 ease-out", strength.color, strength.width)} />
+                            </div>
+
+                            {/* Bullet Checklist */}
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-1 text-[11px]">
+                                {passwordRequirements.map((req, i) => (
+                                    <div key={i} className="flex items-center gap-1.5">
+                                        <CheckCircle2 className={cn(
+                                            "h-3.5 w-3.5 transition-colors duration-300",
+                                            req.test ? "text-emerald-500 fill-emerald-500/10" : "text-muted-foreground/45"
+                                        )} />
+                                        <span className={req.test ? "text-foreground font-medium" : "text-muted-foreground"}>
+                                            {req.label}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <p className="text-[10px] text-muted-foreground/80 leading-normal pt-1.5 border-t border-border/40">
+                                🔒 <strong>Why password strength is important:</strong> A strong password prevents unauthorized access to your account and protects the integrity of our academic question repository.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-2">

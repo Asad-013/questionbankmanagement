@@ -9,7 +9,7 @@ const PUBLIC_PREFIXES = ['/reset-password', '/_next', '/api/public', '/auth']
 const AUTH_PATHS = ['/login', '/register', '/forgot-password']
 
 // Protected route prefixes — require authentication
-const PROTECTED_PREFIXES = ['/admin', '/moderator', '/upload', '/profile', '/notifications', '/questions', '/feedback']
+const PROTECTED_PREFIXES = ['/admin', '/moderator', '/upload', '/profile', '/notifications', '/feedback']
 
 function isPublicPath(pathname: string): boolean {
     if (PUBLIC_PATHS.includes(pathname)) return true
