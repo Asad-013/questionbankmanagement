@@ -97,8 +97,13 @@ export default function RegisterPage() {
                 toast.error(result.error);
                 setIsLoading(false);
             } else if (result?.success) {
-                setSuccessMessage(result.success);
-                toast.success("Account created! Please verify your email.");
+                if (typeof result.success === "string") {
+                    setSuccessMessage(result.success);
+                    toast.success("Account created! Please verify your email.");
+                } else {
+                    toast.success("Account created! Welcome!");
+                    window.location.href = "/";
+                }
             }
         } catch (error) {
             console.error("Signup error", error);

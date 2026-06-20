@@ -5,7 +5,7 @@ import { login } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Mail, Lock, Eye, EyeOff, CheckCircle2, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, CheckCircle2, ArrowRight, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
@@ -24,8 +24,16 @@ export default function LoginPage() {
         "session-expired": "Your session has expired. Please sign in again.",
         "email-confirmed": "Email confirmed! You can now sign in.",
     };
+    const ALLOWED_ERRORS: Record<string, string> = {
+        "verification-failed": "The verification link is invalid or has expired. Please try signing up again.",
+        "auth-code-error": "The authorization code is invalid or has expired. Please try again.",
+    };
+
     const msgKey = searchParams.get("msg");
     const resetMessage = msgKey ? (ALLOWED_MESSAGES[msgKey] ?? null) : null;
+
+    const errorKey = searchParams.get("error");
+    const errorMessage = errorKey ? (ALLOWED_ERRORS[errorKey] ?? null) : null;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -37,8 +45,10 @@ export default function LoginPage() {
             if (result?.error) {
                 toast.error(result.error);
                 setIsLoading(false);
-            } else {
+            } else if (result?.success) {
                 toast.success("Welcome back!");
+                // Force page reload redirect so Navbar updates the session and user profile info
+                window.location.href = searchParams.get("next") || "/";
             }
         } catch (error) {
             console.error(error);
@@ -79,6 +89,13 @@ export default function LoginPage() {
                 <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 text-sm animate-in fade-in zoom-in-95 duration-300">
                     <CheckCircle2 className="h-5 w-5 shrink-0" />
                     <span>{resetMessage}</span>
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm animate-in fade-in zoom-in-95 duration-300">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <span>{errorMessage}</span>
                 </div>
             )}
 

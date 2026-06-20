@@ -23,8 +23,9 @@ export default function ResetPasswordPage() {
             if (result?.error) {
                 toast.error(result.error);
                 setIsLoading(false);
-            } else {
+            } else if (result?.success) {
                 toast.success("Password reset successfully!");
+                window.location.href = "/login?msg=password-updated";
             }
         } catch (error) {
             console.error(error);

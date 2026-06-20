@@ -45,7 +45,7 @@ export async function login(formData: FormData) {
     }
 
     revalidatePath("/", "layout");
-    redirect("/");
+    return { success: true };
 }
 
 export async function signup(formData: FormData) {
@@ -69,6 +69,7 @@ export async function signup(formData: FormData) {
     });
 
     if (error) {
+        console.error("Supabase signup error detail:", error);
         // SECURITY FIX: Never return the raw Supabase error.
         // Supabase returns "User already registered" which confirms an email exists.
         return { error: "Unable to create account. Please try again later." };
@@ -88,7 +89,7 @@ export async function signup(formData: FormData) {
         }
 
         revalidatePath("/", "layout");
-        redirect("/");
+        return { success: true };
     }
 
     // Email confirmation required — don't log the user in yet
@@ -151,5 +152,5 @@ export async function resetPassword(formData: FormData) {
     // SECURITY FIX (VULN-12): Use a whitelist key instead of free-text in the URL.
     // Previously: redirect("/login?message=Password updated successfully")
     // An attacker could craft: /login?message=Your+account+is+blocked.+Enter+credentials+here
-    redirect("/login?msg=password-updated");
+    return { success: true };
 }
