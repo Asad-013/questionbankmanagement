@@ -87,7 +87,11 @@ export default function RegisterPage() {
 
         setIsLoading(true);
 
-        const formData = new FormData(e.currentTarget);
+        // Build FormData manually from state to avoid React Server Action serialization
+        // prefixing field names with numeric indices (e.g. "1_email" instead of "email")
+        const formData = new FormData();
+        formData.set("email", email);
+        formData.set("password", password);
         formData.set("role", "student");
 
         try {

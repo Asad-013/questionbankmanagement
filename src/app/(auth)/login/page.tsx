@@ -38,7 +38,13 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsLoading(true);
-        const formData = new FormData(e.currentTarget);
+
+        // Build FormData manually to avoid React Server Action serialization
+        // prefixing field names with numeric indices (e.g. "1_email" instead of "email")
+        const form = e.currentTarget;
+        const formData = new FormData();
+        formData.set("email", (form.elements.namedItem("email") as HTMLInputElement).value);
+        formData.set("password", (form.elements.namedItem("password") as HTMLInputElement).value);
 
         try {
             const result = await login(formData);
