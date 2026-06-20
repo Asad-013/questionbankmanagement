@@ -16,7 +16,11 @@ export default function ResetPasswordPage() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsLoading(true);
-        const formData = new FormData(e.currentTarget);
+
+        const form = e.currentTarget;
+        const formData = new FormData();
+        formData.set("password", (form.elements.namedItem("password") as HTMLInputElement).value);
+        formData.set("confirmPassword", (form.elements.namedItem("confirmPassword") as HTMLInputElement).value);
 
         try {
             const result = await resetPassword(formData);
