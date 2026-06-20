@@ -5,13 +5,19 @@ import { resetPassword } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Loader2, Lock, Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export default function ResetPasswordPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const searchParams = useSearchParams();
+
+    const errorCode = searchParams.get("error_code");
+    const errorMsg = searchParams.get("error_description") || searchParams.get("error");
+    const isLinkInvalid = errorCode === "otp_expired" || !!searchParams.get("error");
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -36,6 +42,40 @@ export default function ResetPasswordPage() {
             setIsLoading(false);
         }
     };
+
+    if (isLinkInvalid) {
+        return (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+                <div className="space-y-2">
+                    <h1 className="text-2xl font-bold tracking-tight text-red-500 flex items-center gap-2">
+                        <AlertCircle className="h-6 w-6 shrink-0" />
+                        Link Expired or Invalid
+                    </h1>
+                    <p className="text-muted-foreground text-sm">
+                        This password reset link is no longer valid. Password reset links expire after a short time or can only be used once.
+                    </p>
+                </div>
+
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm">
+                    {errorMsg ? decodeURIComponent(errorMsg.replace(/\+/g, " ")) : "The authentication code or token is invalid or expired."}
+                </div>
+
+                <Button asChild className="w-full h-11 rounded-xl font-medium shadow-lg shadow-primary/20">
+                    <Link href="/forgot-password">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Request New Reset Link
+                    </Link>
+                </Button>
+
+                <div className="text-center text-sm text-muted-foreground">
+                    Back to{" "}
+                    <Link href="/login" className="font-semibold text-primary hover:underline transition-colors">
+                        Sign in
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
